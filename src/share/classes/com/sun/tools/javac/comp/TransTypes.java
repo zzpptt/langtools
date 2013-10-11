@@ -68,6 +68,7 @@ public class TransTypes extends TreeTranslator {
     private TreeMaker make;
     private Enter enter;
     private boolean allowEnums;
+    private boolean allowInterfaceBridges;
     private Types types;
     private final Resolve resolve;
 
@@ -91,6 +92,7 @@ public class TransTypes extends TreeTranslator {
         Source source = Source.instance(context);
         allowEnums = source.allowEnums();
         addBridges = source.addBridges();
+        allowInterfaceBridges = source.allowDefaultMethods();
         types = Types.instance(context);
         make = TreeMaker.instance(context);
         resolve = Resolve.instance(context);
@@ -172,10 +174,13 @@ public class TransTypes extends TreeTranslator {
     JCExpression retype(JCExpression tree, Type erasedType, Type target) {
 //      System.err.println("retype " + tree + " to " + erasedType);//DEBUG
         if (!erasedType.isPrimitive()) {
-            if (target != null && target.isPrimitive())
+            if (target != null && target.isPrimitive()) {
                 target = erasure(tree.type);
+            }
             tree.type = erasedType;
-            if (target != null) return coerce(tree, target);
+            if (target != null) {
+                return coerce(tree, target);
+            }
         }
         return tree;
     }
@@ -249,12 +254,19 @@ public class TransTypes extends TreeTranslator {
 
         // Create a bridge method symbol and a bridge definition without a body.
         Type bridgeType = meth.erasure(types);
-        long flags = impl.flags() & AccessFlags | SYNTHETIC | BRIDGE;
+        long flags = impl.flags() & AccessFlags | SYNTHETIC | BRIDGE |
+                (origin.isInterface() ? DEFAULT : 0);
         if (hypothetical) flags |= HYPOTHETICAL;
         MethodSymbol bridge = new MethodSymbol(flags,
                                                meth.name,
                                                bridgeType,
                                                origin);
+        /* once JDK-6996415 is solved it should be checked if this approach can
+         * be applied to method addOverrideBridgesIfNeeded
+         */
+        bridge.params = createBridgeParams(impl, bridge, bridgeType);
+        bridge.setAttributes(impl);
+
         if (!hypothetical) {
             JCMethodDecl md = make.MethodDef(bridge, null);
 
@@ -287,6 +299,26 @@ public class TransTypes extends TreeTranslator {
         // Add bridge to scope of enclosing class and `overridden' table.
         origin.members().enter(bridge);
         overridden.put(bridge, meth);
+    }
+
+    private List<VarSymbol> createBridgeParams(MethodSymbol impl, MethodSymbol bridge,
+            Type bridgeType) {
+        List<VarSymbol> bridgeParams = null;
+        if (impl.params != null) {
+            bridgeParams = List.nil();
+            List<VarSymbol> implParams = impl.params;
+            Type.MethodType mType = (Type.MethodType)bridgeType;
+            List<Type> argTypes = mType.argtypes;
+            while (implParams.nonEmpty() && argTypes.nonEmpty()) {
+                VarSymbol param = new VarSymbol(implParams.head.flags() | SYNTHETIC | PARAMETER,
+                        implParams.head.name, argTypes.head, bridge);
+                param.setAttributes(implParams.head);
+                bridgeParams = bridgeParams.append(param);
+                implParams = implParams.tail;
+                argTypes = argTypes.tail;
+            }
+        }
+        return bridgeParams;
     }
 
     /** Add bridge if given symbol is a non-private, non-static member
@@ -358,11 +390,12 @@ public class TransTypes extends TreeTranslator {
         }
     }
     // where
-        Filter<Symbol> overrideBridgeFilter = new Filter<Symbol>() {
+        private Filter<Symbol> overrideBridgeFilter = new Filter<Symbol>() {
             public boolean accepts(Symbol s) {
                 return (s.flags() & (SYNTHETIC | OVERRIDE_BRIDGE)) != SYNTHETIC;
             }
         };
+
         /**
          * @param method The symbol for which a bridge might have to be added
          * @param impl The implementation of method
@@ -641,7 +674,11 @@ public class TransTypes extends TreeTranslator {
         if (tree.varargsElement != null)
             tree.varargsElement = types.erasure(tree.varargsElement);
         else
-            Assert.check(tree.args.length() == argtypes.length());
+            if (tree.args.length() != argtypes.length()) {
+                log.error(tree.pos(),
+                              "method.invoked.with.incorrect.number.arguments",
+                              tree.args.length(), argtypes.length());
+            }
         tree.args = translateArgs(tree.args, argtypes, tree.varargsElement);
 
         tree.type = types.erasure(tree.type);
@@ -686,8 +723,8 @@ public class TransTypes extends TreeTranslator {
     public void visitAssign(JCAssign tree) {
         tree.lhs = translate(tree.lhs, null);
         tree.rhs = translate(tree.rhs, erasure(tree.lhs.type));
-        tree.type = erasure(tree.type);
-        result = tree;
+        tree.type = erasure(tree.lhs.type);
+        result = retype(tree, tree.type, pt);
     }
 
     public void visitAssignop(JCAssignOp tree) {
@@ -796,7 +833,7 @@ public class TransTypes extends TreeTranslator {
     }
 
     public void visitReference(JCMemberReference tree) {
-        tree.expr = translate(tree.expr, null);
+        tree.expr = translate(tree.expr, erasure(tree.expr.type));
         tree.type = erasure(tree.type);
         result = tree;
     }
@@ -850,7 +887,7 @@ public class TransTypes extends TreeTranslator {
 
     private List<JCTree> addOverrideBridgesIfNeeded(DiagnosticPosition pos,
                                     final ClassSymbol c) {
-        ListBuffer<JCTree> buf = ListBuffer.lb();
+        ListBuffer<JCTree> buf = new ListBuffer<>();
         if (c.isInterface() || !boundsRestricted(c))
             return buf.toList();
         Type t = types.supertype(c.type);
@@ -970,8 +1007,9 @@ public class TransTypes extends TreeTranslator {
                     ListBuffer<JCTree> bridges = new ListBuffer<JCTree>();
                     if (false) //see CR: 6996415
                         bridges.appendList(addOverrideBridgesIfNeeded(tree, c));
-                    if ((tree.sym.flags() & INTERFACE) == 0)
-                        addBridges(tree.pos(), tree.sym, bridges);
+                    if (allowInterfaceBridges || (tree.sym.flags() & INTERFACE) == 0) {
+                        addBridges(tree.pos(), c, bridges);
+                    }
                     tree.defs = bridges.toList().prependList(tree.defs);
                 }
                 tree.type = erasure(tree.type);

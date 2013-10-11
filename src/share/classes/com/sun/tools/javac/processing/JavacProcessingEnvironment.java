@@ -36,10 +36,7 @@ import java.util.regex.*;
 
 import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.PackageElement;
-import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.*;
 import javax.lang.model.util.*;
 import javax.tools.DiagnosticListener;
 import javax.tools.JavaFileManager;
@@ -76,6 +73,7 @@ import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.Name;
 import com.sun.tools.javac.util.Names;
 import com.sun.tools.javac.util.Options;
+import com.sun.tools.javac.util.ServiceLoader;
 import static com.sun.tools.javac.code.Lint.LintCategory.PROCESSING;
 import static com.sun.tools.javac.main.Option.*;
 import static com.sun.tools.javac.comp.CompileStates.CompileState;
@@ -91,7 +89,7 @@ import static com.sun.tools.javac.util.JCDiagnostic.DiagnosticFlag.*;
  * deletion without notice.</b>
  */
 public class JavacProcessingEnvironment implements ProcessingEnvironment, Closeable {
-    Options options;
+    private final Options options;
 
     private final boolean printProcessorInfo;
     private final boolean printRounds;
@@ -166,6 +164,7 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
 
     protected JavacProcessingEnvironment(Context context) {
         this.context = context;
+        context.put(JavacProcessingEnvironment.class, this);
         log = Log.instance(context);
         source = Source.instance(context);
         diags = JCDiagnostic.Factory.instance(context);
@@ -760,12 +759,30 @@ public class JavacProcessingEnvironment implements ProcessingEnvironment, Closea
         }
 
         @Override
-        public Set<TypeElement> scan(Element e, Set<TypeElement> p) {
+        public Set<TypeElement> visitType(TypeElement e, Set<TypeElement> p) {
+            // Type parameters are not considered to be enclosed by a type
+            scan(e.getTypeParameters(), p);
+            return scan(e.getEnclosedElements(), p);
+        }
+
+        @Override
+        public Set<TypeElement> visitExecutable(ExecutableElement e, Set<TypeElement> p) {
+            // Type parameters are not considered to be enclosed by an executable
+            scan(e.getTypeParameters(), p);
+            return scan(e.getEnclosedElements(), p);
+        }
+
+        void addAnnotations(Element e, Set<TypeElement> p) {
             for (AnnotationMirror annotationMirror :
                      elements.getAllAnnotationMirrors(e) ) {
                 Element e2 = annotationMirror.getAnnotationType().asElement();
                 p.add((TypeElement) e2);
             }
+        }
+
+        @Override
+        public Set<TypeElement> scan(Element e, Set<TypeElement> p) {
+            addAnnotations(e, p);
             return super.scan(e, p);
         }
     }

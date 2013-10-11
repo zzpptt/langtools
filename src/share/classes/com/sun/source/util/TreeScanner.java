@@ -149,6 +149,7 @@ public class TreeScanner<R,P> implements TreeVisitor<R,P> {
     public R visitVariable(VariableTree node, P p) {
         R r = scan(node.getModifiers(), p);
         r = scanAndReduce(node.getType(), p, r);
+        r = scanAndReduce(node.getNameExpression(), p, r);
         r = scanAndReduce(node.getInitializer(), p, r);
         return r;
     }
@@ -284,6 +285,10 @@ public class TreeScanner<R,P> implements TreeVisitor<R,P> {
         R r = scan(node.getType(), p);
         r = scanAndReduce(node.getDimensions(), p, r);
         r = scanAndReduce(node.getInitializers(), p, r);
+        r = scanAndReduce(node.getAnnotations(), p, r);
+        for (Iterable< ? extends Tree> dimAnno : node.getDimAnnotations()) {
+            r = scanAndReduce(dimAnno, p, r);
+        }
         return r;
     }
 

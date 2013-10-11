@@ -35,7 +35,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
-import java.util.ServiceLoader;
 import java.util.Set;
 
 import javax.annotation.processing.Processor;
@@ -56,6 +55,7 @@ import com.sun.tools.javac.processing.JavacProcessingEnvironment;
 import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.Log.PrefixKind;
 import com.sun.tools.javac.util.Log.WriterKind;
+import com.sun.tools.javac.util.ServiceLoader;
 import static com.sun.tools.javac.main.Option.*;
 
 /** This class provides a command line interface to the javac compiler.
@@ -262,6 +262,11 @@ public class Main {
             }
         }
 
+        if (options.get(PROFILE) != null && options.get(BOOTCLASSPATH) != null) {
+            error("err.profile.bootclasspath.conflict");
+            return null;
+        }
+
         if (this.classnames != null && classNames != null) {
             this.classnames.addAll(Arrays.asList(classNames));
         }
@@ -377,10 +382,10 @@ public class Main {
     }
 
     public Result compile(String[] args,
-                       String[] classNames,
-                       Context context,
-                       List<JavaFileObject> fileObjects,
-                       Iterable<? extends Processor> processors)
+                          String[] classNames,
+                          Context context,
+                          List<JavaFileObject> fileObjects,
+                          Iterable<? extends Processor> processors)
     {
         context.put(Log.outKey, out);
         log = Log.instance(context);
@@ -469,7 +474,6 @@ public class Main {
                                 pluginMessage(ex);
                                 return Result.SYSERR;
                             }
-
                         }
                     }
                 }

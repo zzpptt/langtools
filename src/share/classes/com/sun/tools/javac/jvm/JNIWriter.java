@@ -157,17 +157,10 @@ public class JNIWriter {
         if (c.isLocal() || (c.flags() & Flags.SYNTHETIC) != 0)
             return false;
 
-        /* temporary code for backwards compatibility */
-        for (Attribute.Compound a: c.annotations.getDeclarationAttributes()) {
-            if (a.type.tsym == syms.nativeHeaderType_old.tsym)
-                return true;
-        }
-        /* end of temporary code for backwards compatibility */
-
         for (Scope.Entry i = c.members_field.elems; i != null; i = i.sibling) {
             if (i.sym.kind == Kinds.MTH && (i.sym.flags() & Flags.NATIVE) != 0)
                 return true;
-            for (Attribute.Compound a: i.sym.annotations.getDeclarationAttributes()) {
+            for (Attribute.Compound a: i.sym.getDeclarationAttributes()) {
                 if (a.type.tsym == syms.nativeHeaderType.tsym)
                     return true;
             }

@@ -234,7 +234,7 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
     public JCTree visitLabeledStatement(LabeledStatementTree node, P p) {
         JCLabeledStatement t = (JCLabeledStatement) node;
         JCStatement body = copy(t.body, p);
-        return M.at(t.pos).Labelled(t.label, t.body);
+        return M.at(t.pos).Labelled(t.label, body);
     }
 
     public JCTree visitLiteral(LiteralTree node, P p) {
@@ -340,7 +340,7 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
 
     public JCTree visitThrow(ThrowTree node, P p) {
         JCThrow t = (JCThrow) node;
-        JCTree expr = copy(t.expr, p);
+        JCExpression expr = copy(t.expr, p);
         return M.at(t.pos).Throw(expr);
     }
 
@@ -422,8 +422,13 @@ public class TreeCopier<P> implements TreeVisitor<JCTree,P> {
         JCVariableDecl t = (JCVariableDecl) node;
         JCModifiers mods = copy(t.mods, p);
         JCExpression vartype = copy(t.vartype, p);
-        JCExpression init = copy(t.init, p);
-        return M.at(t.pos).VarDef(mods, t.name, vartype, init);
+        if (t.nameexpr == null) {
+            JCExpression init = copy(t.init, p);
+            return M.at(t.pos).VarDef(mods, t.name, vartype, init);
+        } else {
+            JCExpression nameexpr = copy(t.nameexpr, p);
+            return M.at(t.pos).ReceiverVarDef(mods, nameexpr, vartype);
+        }
     }
 
     public JCTree visitWhileLoop(WhileLoopTree node, P p) {

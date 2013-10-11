@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -116,9 +116,9 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
     public Content getNavLinkPrevious() {
         Content li;
         if (prev != null) {
-            Content prevLink = new RawHtml(getLink(new LinkInfoImpl(configuration,
-                    LinkInfoImpl.CONTEXT_CLASS, prev.asClassDoc(), "",
-                    configuration.getText("doclet.Prev_Class"), true)));
+            Content prevLink = getLink(new LinkInfoImpl(configuration,
+                    LinkInfoImpl.Kind.CLASS, prev.asClassDoc())
+                    .label(prevclassLabel).strong(true));
             li = HtmlTree.LI(prevLink);
         }
         else
@@ -134,9 +134,9 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
     public Content getNavLinkNext() {
         Content li;
         if (next != null) {
-            Content nextLink = new RawHtml(getLink(new LinkInfoImpl(configuration,
-                    LinkInfoImpl.CONTEXT_CLASS, next.asClassDoc(), "",
-                    configuration.getText("doclet.Next_Class"), true)));
+            Content nextLink = getLink(new LinkInfoImpl(configuration,
+                    LinkInfoImpl.Kind.CLASS, next.asClassDoc())
+                    .label(nextclassLabel).strong(true));
             li = HtmlTree.LI(nextLink);
         }
         else
@@ -163,11 +163,11 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
             div.addContent(pkgNameDiv);
         }
         LinkInfoImpl linkInfo = new LinkInfoImpl(configuration,
-                LinkInfoImpl.CONTEXT_CLASS_HEADER, annotationType, false);
+                LinkInfoImpl.Kind.CLASS_HEADER, annotationType);
         Content headerContent = new StringContent(header);
         Content heading = HtmlTree.HEADING(HtmlConstants.CLASS_PAGE_HEADING, true,
                 HtmlStyle.title, headerContent);
-        heading.addContent(new RawHtml(getTypeParameterLinks(linkInfo)));
+        heading.addContent(getTypeParameterLinks(linkInfo));
         div.addContent(heading);
         bodyTree.addContent(div);
         return bodyTree;
@@ -220,9 +220,9 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
         addAnnotationInfo(annotationType, pre);
         pre.addContent(modifiers);
         LinkInfoImpl linkInfo = new LinkInfoImpl(configuration,
-                LinkInfoImpl.CONTEXT_CLASS_SIGNATURE, annotationType, false);
+                LinkInfoImpl.Kind.CLASS_SIGNATURE, annotationType);
         Content annotationName = new StringContent(annotationType.name());
-        Content parameterLinks = new RawHtml(getTypeParameterLinks(linkInfo));
+        Content parameterLinks = getTypeParameterLinks(linkInfo);
         if (configuration.linksource) {
             addSrcLink(annotationType, annotationName, pre);
             pre.addContent(parameterLinks);
@@ -262,7 +262,7 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
         annotationInfoTree.addContent(hr);
         Tag[] deprs = annotationType.tags("deprecated");
         if (Util.isDeprecated(annotationType)) {
-            Content strong = HtmlTree.STRONG(deprecatedPhrase);
+            Content strong = HtmlTree.SPAN(HtmlStyle.strong, deprecatedPhrase);
             Content div = HtmlTree.DIV(HtmlStyle.block, strong);
             if (deprs.length > 0) {
                 Tag[] commentTags = deprs[0].inlineTags();
@@ -273,13 +273,6 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
             }
             annotationInfoTree.addContent(div);
         }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public void addAnnotationDetailsMarker(Content memberDetails) {
-        memberDetails.addContent(HtmlConstants.START_OF_ANNOTATION_TYPE_DETAILS);
     }
 
     /**
@@ -304,7 +297,7 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
             subDiv.addContent(div);
         } catch (Exception e) {
             e.printStackTrace();
-            throw new DocletAbortException();
+            throw new DocletAbortException(e);
         }
     }
 
@@ -319,6 +312,12 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
         Content ulNav = HtmlTree.UL(HtmlStyle.subNavList, li);
         MemberSummaryBuilder memberSummaryBuilder = (MemberSummaryBuilder)
                 configuration.getBuilderFactory().getMemberSummaryBuilder(this);
+        Content liNavField = new HtmlTree(HtmlTag.LI);
+        addNavSummaryLink(memberSummaryBuilder,
+                "doclet.navField",
+                VisibleMemberMap.ANNOTATION_TYPE_FIELDS, liNavField);
+        addNavGap(liNavField);
+        ulNav.addContent(liNavField);
         Content liNavReq = new HtmlTree(HtmlTag.LI);
         addNavSummaryLink(memberSummaryBuilder,
                 "doclet.navAnnotationTypeRequiredMember",
@@ -364,12 +363,23 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
         Content ulNav = HtmlTree.UL(HtmlStyle.subNavList, li);
         MemberSummaryBuilder memberSummaryBuilder = (MemberSummaryBuilder)
                 configuration.getBuilderFactory().getMemberSummaryBuilder(this);
+        AbstractMemberWriter writerField =
+                ((AbstractMemberWriter) memberSummaryBuilder.
+                getMemberSummaryWriter(VisibleMemberMap.ANNOTATION_TYPE_FIELDS));
         AbstractMemberWriter writerOptional =
                 ((AbstractMemberWriter) memberSummaryBuilder.
                 getMemberSummaryWriter(VisibleMemberMap.ANNOTATION_TYPE_MEMBER_OPTIONAL));
         AbstractMemberWriter writerRequired =
                 ((AbstractMemberWriter) memberSummaryBuilder.
                 getMemberSummaryWriter(VisibleMemberMap.ANNOTATION_TYPE_MEMBER_REQUIRED));
+        Content liNavField = new HtmlTree(HtmlTag.LI);
+        if (writerField != null){
+            writerField.addNavDetailLink(annotationType.fields().length > 0, liNavField);
+        } else {
+            liNavField.addContent(getResource("doclet.navField"));
+        }
+        addNavGap(liNavField);
+        ulNav.addContent(liNavField);
         if (writerOptional != null){
             Content liNavOpt = new HtmlTree(HtmlTag.LI);
             writerOptional.addNavDetailLink(annotationType.elements().length > 0, liNavOpt);

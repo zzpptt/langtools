@@ -46,6 +46,7 @@ import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.code.Type.ClassType;
+import com.sun.tools.javac.code.TypeTag;
 import com.sun.tools.javac.comp.AttrContext;
 import com.sun.tools.javac.comp.Env;
 import com.sun.tools.javac.tree.JCTree;
@@ -127,7 +128,14 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
             try {
                 return clazz.flags();
             } catch (CompletionFailure ex) {
-                // quietly ignore completion failures
+                /* Quietly ignore completion failures.
+                 * Note that a CompletionFailure can only
+                 * occur as a result of calling complete(),
+                 * which will always remove the current
+                 * completer, leaving it to be null or
+                 * follow-up completer. Thus the loop
+                 * is guaranteed to eventually terminate.
+                 */
             }
         }
     }
@@ -281,7 +289,7 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
     }
 
     public boolean isFunctionalInterface() {
-        return env.types.isFunctionalInterface(tsym);
+        return env.types.isFunctionalInterface(tsym) && env.source.allowLambda();
     }
 
     /**
@@ -516,7 +524,7 @@ public class ClassDocImpl extends ProgramElementDocImpl implements ClassDoc {
             return null;
         Type sup = env.types.supertype(type);
         return TypeMaker.getType(env,
-                                 (sup != type) ? sup : env.syms.objectType);
+                                 (sup.hasTag(TypeTag.NONE)) ? env.syms.objectType : sup);
     }
 
     /**

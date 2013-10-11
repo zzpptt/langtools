@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@ import java.util.*;
 
 import com.sun.javadoc.*;
 import com.sun.tools.doclets.internal.toolkit.Configuration;
+import com.sun.tools.doclets.internal.toolkit.Content;
 import com.sun.tools.doclets.internal.toolkit.util.*;
 
 /**
@@ -104,7 +105,9 @@ public class ValueTaglet extends BaseInlineTaglet {
     }
 
     /**
-     * Given the name of the field, return the corresponding FieldDoc.
+     * Given the name of the field, return the corresponding FieldDoc. Return null
+     * due to invalid use of value tag if the name is null or empty string and if
+     * the value tag is not used on a field.
      *
      * @param config the current configuration of the doclet.
      * @param tag the value tag.
@@ -113,10 +116,8 @@ public class ValueTaglet extends BaseInlineTaglet {
      * it is assumed that the field is in the current class.
      *
      * @return the corresponding FieldDoc. If the name is null or empty string,
-     * return field that the value tag was used in.
-     *
-     * @throws DocletAbortException if the value tag does not specify a name to
-     * a value field and it is not used within the comments of a valid field.
+     * return field that the value tag was used in. Return null if the name is null
+     * or empty string and if the value tag is not used on a field.
      */
     private FieldDoc getFieldDoc(Configuration config, Tag tag, String name) {
         if (name == null || name.length() == 0) {
@@ -124,8 +125,9 @@ public class ValueTaglet extends BaseInlineTaglet {
             if (tag.holder() instanceof FieldDoc) {
                 return (FieldDoc) tag.holder();
             } else {
-                //This should never ever happen.
-                throw new DocletAbortException();
+                // If the value tag does not specify a parameter which is a valid field and
+                // it is not used within the comments of a valid field, return null.
+                 return null;
             }
         }
         StringTokenizer st = new StringTokenizer(name, "#");
@@ -160,16 +162,22 @@ public class ValueTaglet extends BaseInlineTaglet {
     /**
      * {@inheritDoc}
      */
-    public TagletOutput getTagletOutput(Tag tag, TagletWriter writer) {
+    public Content getTagletOutput(Tag tag, TagletWriter writer) {
         FieldDoc field = getFieldDoc(
             writer.configuration(), tag, tag.text());
         if (field == null) {
-            //Reference is unknown.
-            writer.getMsgRetriever().warning(tag.holder().position(),
-                "doclet.value_tag_invalid_reference", tag.text());
+            if (tag.text().isEmpty()) {
+                //Invalid use of @value
+                writer.getMsgRetriever().warning(tag.holder().position(),
+                        "doclet.value_tag_invalid_use");
+            } else {
+                //Reference is unknown.
+                writer.getMsgRetriever().warning(tag.holder().position(),
+                        "doclet.value_tag_invalid_reference", tag.text());
+            }
         } else if (field.constantValue() != null) {
             return writer.valueTagOutput(field,
-                Util.escapeHtmlChars(field.constantValueExpression()),
+                field.constantValueExpression(),
                 ! field.equals(tag.holder()));
         } else {
             //Referenced field is not a constant.

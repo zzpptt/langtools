@@ -31,6 +31,7 @@ import java.util.*;
 import javax.tools.JavaFileManager;
 
 import com.sun.javadoc.*;
+import com.sun.tools.doclets.formats.html.markup.ContentBuilder;
 import com.sun.tools.doclets.internal.toolkit.*;
 import com.sun.tools.doclets.internal.toolkit.util.*;
 import com.sun.tools.doclint.DocLint;
@@ -323,7 +324,18 @@ public class ConfigurationImpl extends Configuration {
             option.startsWith("-xdoclint:")) {
             return 1;
         } else if (option.equals("-help")) {
+            // Uugh: first, this should not be hidden inside optionLength,
+            // and second, we should not be writing directly to stdout.
+            // But we have no access to a DocErrorReporter, which would
+            // allow use of reporter.printNotice
             System.out.println(getText("doclet.usage"));
+            return 1;
+        } else if (option.equals("-x")) {
+            // Uugh: first, this should not be hidden inside optionLength,
+            // and second, we should not be writing directly to stdout.
+            // But we have no access to a DocErrorReporter, which would
+            // allow use of reporter.printNotice
+            System.out.println(getText("doclet.X.usage"));
             return 1;
         } else if (option.equals("-footer") ||
                    option.equals("-header") ||
@@ -561,5 +573,10 @@ public class ConfigurationImpl extends Configuration {
             return pos == null || ((RootDocImpl) root).showTagMessages();
         }
         return true;
+    }
+
+    @Override
+    public Content newContent() {
+        return new ContentBuilder();
     }
 }

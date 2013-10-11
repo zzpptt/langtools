@@ -213,6 +213,20 @@ public class MemberSummaryBuilder extends AbstractMemberBuilder {
     }
 
     /**
+     * Build the summary for fields.
+     *
+     * @param node the XML element that specifies which components to document
+     * @param memberSummaryTree the content tree to which the documentation will be added
+     */
+    public void buildAnnotationTypeFieldsSummary(XMLNode node, Content memberSummaryTree) {
+        MemberSummaryWriter writer =
+                memberSummaryWriters[VisibleMemberMap.ANNOTATION_TYPE_FIELDS];
+        VisibleMemberMap visibleMemberMap =
+                visibleMemberMaps[VisibleMemberMap.ANNOTATION_TYPE_FIELDS];
+        addSummary(writer, visibleMemberMap, false, memberSummaryTree);
+    }
+
+    /**
      * Build the summary for the optional members.
      *
      * @param node the XML element that specifies which components to document
@@ -385,14 +399,20 @@ public class MemberSummaryBuilder extends AbstractMemberBuilder {
         }
         commentTextBuilder.append(propertyDoc.commentText());
 
-        Tag[] tags = propertyDoc.tags("@defaultValue");
-        if (tags != null) {
-            for (Tag tag: tags) {
-                commentTextBuilder.append("\n")
-                                  .append(tag.name())
-                                  .append(" ")
-                                  .append(tag.text());
+        // copy certain tags
+        List<Tag> allTags = new LinkedList<Tag>();
+        String[] tagNames = {"@defaultValue", "@since"};
+        for (String tagName: tagNames) {
+            Tag[] tags = propertyDoc.tags(tagName);
+            if (tags != null) {
+                allTags.addAll(Arrays.asList(tags));
             }
+        }
+        for (Tag tag: allTags) {
+            commentTextBuilder.append("\n")
+                                .append(tag.name())
+                                .append(" ")
+                                .append(tag.text());
         }
 
         //add @see tags

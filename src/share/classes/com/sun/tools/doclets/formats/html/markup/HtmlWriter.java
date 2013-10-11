@@ -27,6 +27,8 @@ package com.sun.tools.doclets.formats.html.markup;
 
 import java.io.*;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.sun.tools.doclets.internal.toolkit.*;
 import com.sun.tools.doclets.internal.toolkit.util.*;
@@ -195,34 +197,33 @@ public class HtmlWriter {
                 configuration.getText("doclet.Modifier"),
                 configuration.getText("doclet.Type"));
         overviewLabel = getResource("doclet.Overview");
-        defaultPackageLabel = new RawHtml(
-                DocletConstants.DEFAULT_PACKAGE_NAME);
+        defaultPackageLabel = new StringContent(DocletConstants.DEFAULT_PACKAGE_NAME);
         packageLabel = getResource("doclet.Package");
         profileLabel = getResource("doclet.Profile");
         useLabel = getResource("doclet.navClassUse");
         prevLabel = getResource("doclet.Prev");
         nextLabel = getResource("doclet.Next");
-        prevclassLabel = getResource("doclet.Prev_Class");
-        nextclassLabel = getResource("doclet.Next_Class");
+        prevclassLabel = getNonBreakResource("doclet.Prev_Class");
+        nextclassLabel = getNonBreakResource("doclet.Next_Class");
         summaryLabel = getResource("doclet.Summary");
         detailLabel = getResource("doclet.Detail");
         framesLabel = getResource("doclet.Frames");
-        noframesLabel = getResource("doclet.No_Frames");
+        noframesLabel = getNonBreakResource("doclet.No_Frames");
         treeLabel = getResource("doclet.Tree");
         classLabel = getResource("doclet.Class");
         deprecatedLabel = getResource("doclet.navDeprecated");
         deprecatedPhrase = getResource("doclet.Deprecated");
-        allclassesLabel = getResource("doclet.All_Classes");
-        allpackagesLabel = getResource("doclet.All_Packages");
-        allprofilesLabel = getResource("doclet.All_Profiles");
+        allclassesLabel = getNonBreakResource("doclet.All_Classes");
+        allpackagesLabel = getNonBreakResource("doclet.All_Packages");
+        allprofilesLabel = getNonBreakResource("doclet.All_Profiles");
         indexLabel = getResource("doclet.Index");
         helpLabel = getResource("doclet.Help");
         seeLabel = getResource("doclet.See");
         descriptionLabel = getResource("doclet.Description");
-        prevpackageLabel = getResource("doclet.Prev_Package");
-        nextpackageLabel = getResource("doclet.Next_Package");
-        prevprofileLabel = getResource("doclet.Prev_Profile");
-        nextprofileLabel = getResource("doclet.Next_Profile");
+        prevpackageLabel = getNonBreakResource("doclet.Prev_Package");
+        nextpackageLabel = getNonBreakResource("doclet.Next_Package");
+        prevprofileLabel = getNonBreakResource("doclet.Prev_Profile");
+        nextprofileLabel = getNonBreakResource("doclet.Next_Profile");
         packagesLabel = getResource("doclet.Packages");
         profilesLabel = getResource("doclet.Profiles");
         methodDetailsLabel = getResource("doclet.Method_Detail");
@@ -252,30 +253,51 @@ public class HtmlWriter {
      * @return a content tree for the text
      */
     public Content getResource(String key) {
-        return new StringContent(configuration.getText(key));
+        return configuration.getResource(key);
+    }
+
+    /**
+     * Get the configuration string as a content, replacing spaces
+     * with non-breaking spaces.
+     *
+     * @param key the key to look for in the configuration file
+     * @return a content tree for the text
+     */
+    public Content getNonBreakResource(String key) {
+        String text = configuration.getText(key);
+        Content c = configuration.newContent();
+        int start = 0;
+        int p;
+        while ((p = text.indexOf(" ", start)) != -1) {
+            c.addContent(text.substring(start, p));
+            c.addContent(RawHtml.nbsp);
+            start = p + 1;
+        }
+        c.addContent(text.substring(start));
+        return c;
     }
 
     /**
      * Get the configuration string as a content.
      *
      * @param key the key to look for in the configuration file
-     * @param a1 string argument added to configuration text
+     * @param o   string or content argument added to configuration text
      * @return a content tree for the text
      */
-    public Content getResource(String key, String a1) {
-        return new RawHtml(configuration.getText(key, a1));
+    public Content getResource(String key, Object o) {
+        return configuration.getResource(key, o);
     }
 
     /**
      * Get the configuration string as a content.
      *
      * @param key the key to look for in the configuration file
-     * @param a1 string argument added to configuration text
-     * @param a2 string argument added to configuration text
+     * @param o1  string or content argument added to configuration text
+     * @param o2  string or content argument added to configuration text
      * @return a content tree for the text
      */
-    public Content getResource(String key, String a1, String a2) {
-        return new RawHtml(configuration.getText(key, a1, a2));
+    public Content getResource(String key, Object o0, Object o1) {
+        return configuration.getResource(key, o0, o1);
     }
 
     /**
@@ -303,14 +325,56 @@ public class HtmlWriter {
      *
      * @return a content for the SCRIPT tag
      */
-    protected Content getFramesetJavaScript(){
+    protected Content getFramesetJavaScript() {
         HtmlTree script = new HtmlTree(HtmlTag.SCRIPT);
         script.addAttr(HtmlAttr.TYPE, "text/javascript");
-        String scriptCode = DocletConstants.NL + "    targetPage = \"\" + window.location.search;" + DocletConstants.NL +
+        String scriptCode = DocletConstants.NL +
+                "    targetPage = \"\" + window.location.search;" + DocletConstants.NL +
                 "    if (targetPage != \"\" && targetPage != \"undefined\")" + DocletConstants.NL +
                 "        targetPage = targetPage.substring(1);" + DocletConstants.NL +
-                "    if (targetPage.indexOf(\":\") != -1)" + DocletConstants.NL +
+                "    if (targetPage.indexOf(\":\") != -1 || (targetPage != \"\" && !validURL(targetPage)))" + DocletConstants.NL +
                 "        targetPage = \"undefined\";" + DocletConstants.NL +
+                "    function validURL(url) {" + DocletConstants.NL +
+                "        try {" + DocletConstants.NL +
+                "            url = decodeURIComponent(url);" + DocletConstants.NL +
+                "        }" + DocletConstants.NL +
+                "        catch (error) {" + DocletConstants.NL +
+                "            return false;" + DocletConstants.NL +
+                "        }" + DocletConstants.NL +
+                "        var pos = url.indexOf(\".html\");" + DocletConstants.NL +
+                "        if (pos == -1 || pos != url.length - 5)" + DocletConstants.NL +
+                "            return false;" + DocletConstants.NL +
+                "        var allowNumber = false;" + DocletConstants.NL +
+                "        var allowSep = false;" + DocletConstants.NL +
+                "        var seenDot = false;" + DocletConstants.NL +
+                "        for (var i = 0; i < url.length - 5; i++) {" + DocletConstants.NL +
+                "            var ch = url.charAt(i);" + DocletConstants.NL +
+                "            if ('a' <= ch && ch <= 'z' ||" + DocletConstants.NL +
+                "                    'A' <= ch && ch <= 'Z' ||" + DocletConstants.NL +
+                "                    ch == '$' ||" + DocletConstants.NL +
+                "                    ch == '_' ||" + DocletConstants.NL +
+                "                    ch.charCodeAt(0) > 127) {" + DocletConstants.NL +
+                "                allowNumber = true;" + DocletConstants.NL +
+                "                allowSep = true;" + DocletConstants.NL +
+                "            } else if ('0' <= ch && ch <= '9'" + DocletConstants.NL +
+                "                    || ch == '-') {" + DocletConstants.NL +
+                "                if (!allowNumber)" + DocletConstants.NL +
+                "                     return false;" + DocletConstants.NL +
+                "            } else if (ch == '/' || ch == '.') {" + DocletConstants.NL +
+                "                if (!allowSep)" + DocletConstants.NL +
+                "                    return false;" + DocletConstants.NL +
+                "                allowNumber = false;" + DocletConstants.NL +
+                "                allowSep = false;" + DocletConstants.NL +
+                "                if (ch == '.')" + DocletConstants.NL +
+                "                     seenDot = true;" + DocletConstants.NL +
+                "                if (ch == '/' && seenDot)" + DocletConstants.NL +
+                "                     return false;" + DocletConstants.NL +
+                "            } else {" + DocletConstants.NL +
+                "                return false;"+ DocletConstants.NL +
+                "            }" + DocletConstants.NL +
+                "        }" + DocletConstants.NL +
+                "        return true;" + DocletConstants.NL +
+                "    }" + DocletConstants.NL +
                 "    function loadFrames() {" + DocletConstants.NL +
                 "        if (targetPage != \"\" && targetPage != \"undefined\")" + DocletConstants.NL +
                 "             top.classFrame.location = top.targetPage;" + DocletConstants.NL +
@@ -398,16 +462,6 @@ public class HtmlWriter {
     public HtmlTree getTitle() {
         HtmlTree title = HtmlTree.TITLE(new StringContent(winTitle));
         return title;
-    }
-
-    /**
-     * Return, text passed, with Italics &lt;i&gt; and &lt;/i&gt; tags, surrounding it.
-     * So if the text passed is "Hi", then string returned will be "&lt;i&gt;Hi&lt;/i&gt;".
-     *
-     * @param text String to be printed in between &lt;I&gt; and &lt;/I&gt; tags.
-     */
-    public String italicsText(String text) {
-        return "<i>" + text + "</i>";
     }
 
     public String codeText(String text) {

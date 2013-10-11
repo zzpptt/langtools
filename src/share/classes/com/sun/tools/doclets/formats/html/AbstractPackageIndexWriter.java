@@ -157,12 +157,9 @@ public abstract class AbstractPackageIndexWriter extends HtmlDocletWriter {
                 addAllProfilesLink(div);
             }
             body.addContent(div);
-            if (configuration.showProfiles) {
-                String profileSummary = configuration.getText("doclet.Profiles");
-                String profilesTableSummary = configuration.getText("doclet.Member_Table_Summary",
-                configuration.getText("doclet.Profile_Summary"),
-                configuration.getText("doclet.profiles"));
-                addProfilesList(profileSummary, profilesTableSummary, body);
+            if (configuration.showProfiles && configuration.profilePackages.size() > 0) {
+                Content profileSummary = configuration.getResource("doclet.Profiles");
+                addProfilesList(profileSummary, body);
             }
             addPackagesList(packages, text, tableSummary, body);
         }
@@ -214,10 +211,8 @@ public abstract class AbstractPackageIndexWriter extends HtmlDocletWriter {
      * Do nothing. This will be overridden.
      *
      * @param profileSummary the profile summary heading
-     * @param profilesTableSummary the profiles table summary information
      * @param body the content tree to which the profiles list will be added
      */
-    protected void addProfilesList(String profileSummary, String profilesTableSummary,
-            Content body) {
+    protected void addProfilesList(Content profileSummary, Content body) {
     }
 }

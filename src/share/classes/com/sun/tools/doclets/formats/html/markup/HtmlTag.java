@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,8 @@
 
 package com.sun.tools.doclets.formats.html.markup;
 
+import java.util.Locale;
+
 /**
  * Enum representing HTML tags.
  *
@@ -44,6 +46,7 @@ public enum HtmlTag {
     CENTER,
     CODE(BlockType.INLINE, EndTag.END),
     DD,
+    DIR,
     DIV,
     DL,
     DT,
@@ -63,6 +66,7 @@ public enum HtmlTag {
     I(BlockType.INLINE, EndTag.END),
     IMG(BlockType.INLINE, EndTag.NOEND),
     LI,
+    LISTING,
     LINK(BlockType.OTHER, EndTag.NOEND),
     MENU,
     META(BlockType.OTHER, EndTag.NOEND),
@@ -75,6 +79,7 @@ public enum HtmlTag {
     SMALL(BlockType.INLINE, EndTag.END),
     SPAN(BlockType.INLINE, EndTag.END),
     STRONG(BlockType.INLINE, EndTag.END),
+    SUB(BlockType.INLINE, EndTag.END),
     TABLE,
     TBODY,
     TD,
@@ -84,14 +89,14 @@ public enum HtmlTag {
     TT(BlockType.INLINE, EndTag.END),
     UL;
 
-    protected final BlockType blockType;
-    protected final EndTag endTag;
-    private final String value;
+    public final BlockType blockType;
+    public final EndTag endTag;
+    public final String value;
 
     /**
      * Enum representing the type of HTML element.
      */
-    protected static enum BlockType {
+    public static enum BlockType {
         BLOCK,
         INLINE,
         OTHER;
@@ -100,7 +105,7 @@ public enum HtmlTag {
     /**
      * Enum representing HTML end tag requirement.
      */
-    protected static enum EndTag {
+    public static enum EndTag {
         END,
         NOEND;
     }
@@ -112,7 +117,7 @@ public enum HtmlTag {
     HtmlTag(BlockType blockType, EndTag endTag ) {
         this.blockType = blockType;
         this.endTag = endTag;
-        this.value = name().toLowerCase();
+        this.value = name().toLowerCase(Locale.US);
     }
 
     /**

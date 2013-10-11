@@ -29,6 +29,7 @@ package com.sun.tools.doclint;
 import java.util.Set;
 
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.type.TypeMirror;
@@ -141,10 +142,10 @@ public class Env {
         currElement = trees.getElement(currPath);
         currOverriddenMethods = ((JavacTypes) types).getOverriddenMethods(currElement);
 
-        AccessKind ak = null;
+        AccessKind ak = AccessKind.PUBLIC;
         for (TreePath p = path; p != null; p = p.getParentPath()) {
             Element e = trees.getElement(p);
-            if (e != null) {
+            if (e != null && e.getKind() != ElementKind.PACKAGE) {
                 ak = min(ak, AccessKind.of(e.getModifiers()));
             }
         }

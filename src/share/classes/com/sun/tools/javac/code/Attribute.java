@@ -83,7 +83,7 @@ public abstract class Attribute implements AnnotationValue {
                 return v.visitString((String) value, p);
             if (value instanceof Integer) {
                 int i = (Integer) value;
-                switch (type.tag) {
+                switch (type.getTag()) {
                 case BOOLEAN:   return v.visitBoolean(i != 0, p);
                 case CHAR:      return v.visitChar((char) i, p);
                 case BYTE:      return v.visitByte((byte) i, p);
@@ -91,7 +91,7 @@ public abstract class Attribute implements AnnotationValue {
                 case INT:       return v.visitInt(i, p);
                 }
             }
-            switch (type.tag) {
+            switch (type.getTag()) {
             case LONG:          return v.visitLong((Long) value, p);
             case FLOAT:         return v.visitFloat((Float) value, p);
             case DOUBLE:        return v.visitDouble((Double) value, p);
@@ -230,6 +230,42 @@ public abstract class Attribute implements AnnotationValue {
             this.position = position;
         }
 
+        public boolean hasUnknownPosition() {
+            return position == null || position.type == TargetType.UNKNOWN;
+        }
+
+        public boolean isContainerTypeCompound() {
+            if (isSynthesized() && values.size() == 1)
+                return getFirstEmbeddedTC() != null;
+            return false;
+        }
+
+        private TypeCompound getFirstEmbeddedTC() {
+            if (values.size() == 1) {
+                Pair<MethodSymbol, Attribute> val = values.get(0);
+                if (val.fst.getSimpleName().contentEquals("value")
+                        && val.snd instanceof Array) {
+                    Array arr = (Array) val.snd;
+                    if (arr.values.length != 0
+                            && arr.values[0] instanceof Attribute.TypeCompound)
+                        return (Attribute.TypeCompound) arr.values[0];
+                }
+            }
+            return null;
+        }
+
+        public boolean tryFixPosition() {
+            if (!isContainerTypeCompound())
+                return false;
+
+            TypeCompound from = getFirstEmbeddedTC();
+            if (from != null && from.position != null &&
+                    from.position.type != TargetType.UNKNOWN) {
+                position = from.position;
+                return true;
+            }
+            return false;
+        }
     }
 
     /** The value for an annotation element of an array type.
@@ -301,6 +337,14 @@ public abstract class Attribute implements AnnotationValue {
         }
         public <R, P> R accept(AnnotationValueVisitor<R, P> v, P p) {
             return v.visitString(toString(), p);
+        }
+    }
+
+    public static class UnresolvedClass extends Error {
+        public Type classType;
+        public UnresolvedClass(Type type, Type classType) {
+            super(type);
+            this.classType = classType;
         }
     }
 

@@ -25,8 +25,6 @@
 
 package com.sun.tools.javadoc;
 
-import javax.lang.model.type.TypeKind;
-
 import com.sun.javadoc.*;
 
 import com.sun.tools.javac.code.Attribute;
@@ -142,7 +140,7 @@ public class TypeVariableImpl extends AbstractTypeImpl implements TypeVariable {
         if (!type.isAnnotated()) {
             return new AnnotationDesc[0];
         }
-        List<TypeCompound> tas = ((com.sun.tools.javac.code.Type.AnnotatedType) type).typeAnnotations;
+        List<? extends TypeCompound> tas = type.getAnnotationMirrors();
         AnnotationDesc res[] = new AnnotationDesc[tas.length()];
         int i = 0;
         for (Attribute.Compound a : tas) {

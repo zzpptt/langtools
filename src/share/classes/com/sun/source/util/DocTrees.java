@@ -30,7 +30,6 @@ import javax.lang.model.element.Element;
 import javax.tools.JavaCompiler.CompilationTask;
 
 import com.sun.source.doctree.DocCommentTree;
-import com.sun.source.doctree.ReferenceTree;
 import javax.tools.Diagnostic;
 
 /**
@@ -67,10 +66,10 @@ public abstract class DocTrees extends Trees {
     public abstract DocCommentTree getDocCommentTree(TreePath path);
 
     /**
-     * Gets the language model element referred to by a ReferenceTree that
-     * appears on the declaration identified by the given path.
+     * Gets the language model element referred to by the leaf node of the given
+     * {@link DocTreePath}, or null if unknown.
      */
-    public abstract Element getElement(TreePath path, ReferenceTree reference);
+    public abstract Element getElement(DocTreePath path);
 
     public abstract DocSourcePositions getSourcePositions();
 
