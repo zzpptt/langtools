@@ -25,8 +25,6 @@
 
 package com.sun.tools.javadoc;
 
-import javax.lang.model.type.TypeKind;
-
 import com.sun.javadoc.*;
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
@@ -64,14 +62,9 @@ public class TypeMaker {
         if (env.legacyDoclet) {
             t = env.types.erasure(t);
         }
-        if (considerAnnotations
-                && t.isAnnotated()) {
-            return new AnnotatedTypeImpl(env, (com.sun.tools.javac.code.Type.AnnotatedType) t);
-        }
 
-        if (t.isAnnotated()) {
-            Type.AnnotatedType at = (Type.AnnotatedType) t;
-            return new AnnotatedTypeImpl(env, at);
+        if (considerAnnotations && t.isAnnotated()) {
+            return new AnnotatedTypeImpl(env, t);
         }
 
         switch (t.getTag()) {
@@ -148,8 +141,7 @@ public class TypeMaker {
     static String getTypeString(DocEnv env, Type t, boolean full) {
         // TODO: should annotations be included here?
         if (t.isAnnotated()) {
-            Type.AnnotatedType at = (Type.AnnotatedType)t;
-            t = at.underlyingType;
+            t = t.unannotatedType();
         }
         switch (t.getTag()) {
         case ARRAY:

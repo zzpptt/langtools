@@ -33,9 +33,6 @@ import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.Options;
 import com.sun.tools.javac.util.Pair;
 
-import static com.sun.tools.javac.code.Flags.*;
-
-
 /**
  * A class for handling -Xlint suboptions and @SuppresssWarnings.
  *
@@ -68,19 +65,11 @@ public class Lint
 
     /**
      * Returns the result of combining the values in this object with
-     * the given annotations.
+     * the metadata on the given symbol.
      */
-    public Lint augment(Annotations annots) {
-        return augmentor.augment(this, annots.getDeclarationAttributes());
-    }
-
-    /**
-     * Returns the result of combining the values in this object with
-     * the given annotations and flags.
-     */
-    public Lint augment(Annotations annots, long flags) {
-        Lint l = augmentor.augment(this, annots.getDeclarationAttributes());
-        if ((flags & DEPRECATED) != 0) {
+    public Lint augment(Symbol sym) {
+        Lint l = augmentor.augment(this, sym.getDeclarationAttributes());
+        if (sym.isDeprecated()) {
             if (l == this)
                 l = new Lint(this);
             l.values.remove(LintCategory.DEPRECATION);
@@ -89,7 +78,6 @@ public class Lint
         return l;
     }
 
-
     private final AugmentVisitor augmentor;
 
     private final EnumSet<LintCategory> values;
@@ -97,7 +85,6 @@ public class Lint
 
     private static final Map<String, LintCategory> map =
             new java.util.concurrent.ConcurrentHashMap<String, LintCategory>(20);
-
 
     protected Lint(Context context) {
         // initialize values according to the lint options
@@ -181,6 +168,11 @@ public class Lint
          * Warn about issues relating to use of command line options
          */
         OPTIONS("options"),
+
+        /**
+         * Warn about issues regarding method overloads.
+         */
+        OVERLOADS("overloads"),
 
         /**
          * Warn about issues regarding method overrides.

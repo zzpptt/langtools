@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,11 +23,10 @@
 
 /*
  * @test
- * @ignore
- * @bug 8003280
+ * @bug 8003280 8013404
  * @summary Add lambda tests
- *  check that target type of cast is propagated to conditional subexpressions
- * @compile TargetType36.java
+ *  check that target type of cast is not propagated to conditional subexpressions
+ * @compile/fail/ref=TargetType36.out -XDrawDiagnostics TargetType36.java
  */
 class TargetType36 { //awaits spec wording on cast vs. poly
 

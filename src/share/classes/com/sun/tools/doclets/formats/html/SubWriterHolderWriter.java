@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -135,10 +135,8 @@ public abstract class SubWriterHolderWriter extends HtmlDocletWriter {
      * @return the content tree for the method type link
      */
     public Content getMethodTypeLinks(MethodTypes methodType) {
-        StringBuilder jsShow = new StringBuilder("javascript:show(");
-        jsShow.append(methodType.value()).append(");");
-        HtmlTree link = HtmlTree.A(jsShow.toString(),
-                new StringContent(methodType.text()));
+        String jsShow = "javascript:show(" + methodType.value() +");";
+        HtmlTree link = HtmlTree.A(jsShow, new StringContent(methodType.text()));
         return link;
     }
 
@@ -177,7 +175,7 @@ public abstract class SubWriterHolderWriter extends HtmlDocletWriter {
         Tag[] deprs = member.tags("deprecated");
         Content div;
         if (Util.isDeprecated((ProgramElementDoc) member)) {
-            Content strong = HtmlTree.STRONG(deprecatedPhrase);
+            Content strong = HtmlTree.SPAN(HtmlStyle.strong, deprecatedPhrase);
             div = HtmlTree.DIV(HtmlStyle.block, strong);
             div.addContent(getSpace());
             if (deprs.length > 0) {
@@ -188,7 +186,7 @@ public abstract class SubWriterHolderWriter extends HtmlDocletWriter {
         } else {
             ClassDoc cd = ((ProgramElementDoc)member).containingClass();
             if (cd != null && Util.isDeprecated(cd)) {
-                Content strong = HtmlTree.STRONG(deprecatedPhrase);
+                Content strong = HtmlTree.SPAN(HtmlStyle.strong, deprecatedPhrase);
                 div = HtmlTree.DIV(HtmlStyle.block, strong);
                 div.addContent(getSpace());
                 tdSummary.addContent(div);

@@ -31,17 +31,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.HashSet;
 
-import javax.lang.model.type.TypeKind;
 import javax.tools.JavaFileManager;
 import javax.tools.FileObject;
 import javax.tools.JavaFileObject;
 
 import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.code.Attribute.RetentionPolicy;
-import com.sun.tools.javac.code.Attribute.TypeCompound;
-import static com.sun.tools.javac.code.BoundKind.EXTENDS;
-import static com.sun.tools.javac.code.BoundKind.SUPER;
-import static com.sun.tools.javac.code.BoundKind.UNBOUND;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Type.*;
 import com.sun.tools.javac.code.Types.UniqueType;
@@ -58,7 +53,6 @@ import static com.sun.tools.javac.code.TypeTag.*;
 import static com.sun.tools.javac.jvm.UninitializedType.*;
 import static com.sun.tools.javac.main.Option.*;
 import static javax.tools.StandardLocation.CLASS_OUTPUT;
-
 
 /** This class provides operations to map an internal symbol table graph
  *  rooted in a ClassSymbol into a classfile.
@@ -632,7 +626,7 @@ public class ClassWriter extends ClassFile {
             acount++;
         }
         acount += writeJavaAnnotations(sym.getRawAttributes());
-        acount += writeTypeAnnotations(sym.getRawTypeAttributes());
+        acount += writeTypeAnnotations(sym.getRawTypeAttributes(), false);
         return acount;
     }
 
@@ -661,6 +655,14 @@ public class ClassWriter extends ClassFile {
                 databuf.appendChar(pool.put(s.name));
                 databuf.appendChar(flags);
             }
+            // Now write the captured locals
+            for (VarSymbol s : m.capturedLocals) {
+                final int flags =
+                    ((int) s.flags() & (FINAL | SYNTHETIC | MANDATED)) |
+                    ((int) m.flags() & SYNTHETIC);
+                databuf.appendChar(pool.put(s.name));
+                databuf.appendChar(flags);
+            }
             endAttr(attrIndex);
             return 1;
         } else
@@ -674,13 +676,15 @@ public class ClassWriter extends ClassFile {
     int writeParameterAttrs(MethodSymbol m) {
         boolean hasVisible = false;
         boolean hasInvisible = false;
-        if (m.params != null) for (VarSymbol s : m.params) {
-            for (Attribute.Compound a : s.getRawAttributes()) {
-                switch (types.getRetention(a)) {
-                case SOURCE: break;
-                case CLASS: hasInvisible = true; break;
-                case RUNTIME: hasVisible = true; break;
-                default: ;// /* fail soft */ throw new AssertionError(vis);
+        if (m.params != null) {
+            for (VarSymbol s : m.params) {
+                for (Attribute.Compound a : s.getRawAttributes()) {
+                    switch (types.getRetention(a)) {
+                    case SOURCE: break;
+                    case CLASS: hasInvisible = true; break;
+                    case RUNTIME: hasVisible = true; break;
+                    default: ;// /* fail soft */ throw new AssertionError(vis);
+                    }
                 }
             }
         }
@@ -759,44 +763,30 @@ public class ClassWriter extends ClassFile {
         return attrCount;
     }
 
-    int writeTypeAnnotations(List<Attribute.TypeCompound> typeAnnos) {
+    int writeTypeAnnotations(List<Attribute.TypeCompound> typeAnnos, boolean inCode) {
         if (typeAnnos.isEmpty()) return 0;
 
-        ListBuffer<Attribute.TypeCompound> visibles = ListBuffer.lb();
-        ListBuffer<Attribute.TypeCompound> invisibles = ListBuffer.lb();
+        ListBuffer<Attribute.TypeCompound> visibles = new ListBuffer<>();
+        ListBuffer<Attribute.TypeCompound> invisibles = new ListBuffer<>();
 
         for (Attribute.TypeCompound tc : typeAnnos) {
-            if (tc.position == null || tc.position.type == TargetType.UNKNOWN) {
-                boolean found = false;
-                // TODO: the position for the container annotation of a
-                // repeating type annotation has to be set.
-                // This cannot be done when the container is created, because
-                // then the position is not determined yet.
-                // How can we link these pieces better together?
-                if (tc.values.size() == 1) {
-                    Pair<MethodSymbol, Attribute> val = tc.values.get(0);
-                    if (val.fst.getSimpleName().contentEquals("value") &&
-                            val.snd instanceof Attribute.Array) {
-                        Attribute.Array arr = (Attribute.Array) val.snd;
-                        if (arr.values.length != 0 &&
-                                arr.values[0] instanceof Attribute.TypeCompound) {
-                            TypeCompound atycomp = (Attribute.TypeCompound) arr.values[0];
-                            if (atycomp.position.type != TargetType.UNKNOWN) {
-                                tc.position = atycomp.position;
-                                found = true;
-                            }
-                        }
-                    }
-                }
-                if (!found) {
+            if (tc.hasUnknownPosition()) {
+                boolean fixed = tc.tryFixPosition();
+
+                // Could we fix it?
+                if (!fixed) {
                     // This happens for nested types like @A Outer. @B Inner.
                     // For method parameters we get the annotation twice! Once with
                     // a valid position, once unknown.
                     // TODO: find a cleaner solution.
-                    // System.err.println("ClassWriter: Position UNKNOWN in type annotation: " + tc);
+                    PrintWriter pw = log.getWriter(Log.WriterKind.ERROR);
+                    pw.println("ClassWriter: Position UNKNOWN in type annotation: " + tc);
                     continue;
                 }
             }
+
+            if (tc.position.type.isLocal() != inCode)
+                continue;
             if (!tc.position.emitToClassfile())
                 continue;
             switch (types.getRetention(tc)) {
@@ -936,7 +926,7 @@ public class ClassWriter extends ClassFile {
             break;
         // exception parameter
         case EXCEPTION_PARAMETER:
-            databuf.appendByte(p.exception_index);
+            databuf.appendChar(p.exception_index);
             break;
         // method receiver
         case METHOD_RECEIVER:
@@ -1040,6 +1030,7 @@ public class ClassWriter extends ClassFile {
             char flags = (char) adjustFlags(inner.flags_field);
             if ((flags & INTERFACE) != 0) flags |= ABSTRACT; // Interfaces are always ABSTRACT
             if (inner.name.isEmpty()) flags &= ~FINAL; // Anonymous class: unset FINAL flag
+            flags &= ~STRICTFP; //inner classes should not have the strictfp flag set.
             if (dumpInnerClassModifiers) {
                 PrintWriter pw = log.getWriter(Log.WriterKind.ERROR);
                 pw.println("INNERCLASS  " + inner.name);
@@ -1187,25 +1178,26 @@ public class ClassWriter extends ClassFile {
 
         if (code.varBufferSize > 0) {
             int alenIdx = writeAttr(names.LocalVariableTable);
-            databuf.appendChar(code.varBufferSize);
-
+            databuf.appendChar(code.getLVTSize());
             for (int i=0; i<code.varBufferSize; i++) {
                 Code.LocalVar var = code.varBuffer[i];
 
-                // write variable info
-                Assert.check(var.start_pc >= 0
-                        && var.start_pc <= code.cp);
-                databuf.appendChar(var.start_pc);
-                Assert.check(var.length >= 0
-                        && (var.start_pc + var.length) <= code.cp);
-                databuf.appendChar(var.length);
-                VarSymbol sym = var.sym;
-                databuf.appendChar(pool.put(sym.name));
-                Type vartype = sym.erasure(types);
-                if (needsLocalVariableTypeEntry(sym.type))
-                    nGenericVars++;
-                databuf.appendChar(pool.put(typeSig(vartype)));
-                databuf.appendChar(var.reg);
+                for (Code.LocalVar.Range r: var.aliveRanges) {
+                    // write variable info
+                    Assert.check(r.start_pc >= 0
+                            && r.start_pc <= code.cp);
+                    databuf.appendChar(r.start_pc);
+                    Assert.check(r.length >= 0
+                            && (r.start_pc + r.length) <= code.cp);
+                    databuf.appendChar(r.length);
+                    VarSymbol sym = var.sym;
+                    databuf.appendChar(pool.put(sym.name));
+                    Type vartype = sym.erasure(types);
+                    databuf.appendChar(pool.put(typeSig(vartype)));
+                    databuf.appendChar(var.reg);
+                    if (needsLocalVariableTypeEntry(var.sym.type))
+                        nGenericVars++;
+                }
             }
             endAttr(alenIdx);
             acount++;
@@ -1221,13 +1213,15 @@ public class ClassWriter extends ClassFile {
                 VarSymbol sym = var.sym;
                 if (!needsLocalVariableTypeEntry(sym.type))
                     continue;
-                count++;
-                // write variable info
-                databuf.appendChar(var.start_pc);
-                databuf.appendChar(var.length);
-                databuf.appendChar(pool.put(sym.name));
-                databuf.appendChar(pool.put(typeSig(sym.type)));
-                databuf.appendChar(var.reg);
+                for (Code.LocalVar.Range r : var.aliveRanges) {
+                    // write variable info
+                    databuf.appendChar(r.start_pc);
+                    databuf.appendChar(r.length);
+                    databuf.appendChar(pool.put(sym.name));
+                    databuf.appendChar(pool.put(typeSig(sym.type)));
+                    databuf.appendChar(var.reg);
+                    count++;
+                }
             }
             Assert.check(count == nGenericVars);
             endAttr(alenIdx);
@@ -1241,6 +1235,9 @@ public class ClassWriter extends ClassFile {
             endAttr(alenIdx);
             acount++;
         }
+
+        acount += writeTypeAnnotations(code.meth.getRawTypeAttributes(), true);
+
         endAttrs(acountIdx, acount);
     }
     //where
@@ -1627,7 +1624,7 @@ public class ClassWriter extends ClassFile {
             out = null;
         } finally {
             if (out != null) {
-                // if we are propogating an exception, delete the file
+                // if we are propagating an exception, delete the file
                 out.close();
                 outFile.delete();
                 outFile = null;
@@ -1741,7 +1738,7 @@ public class ClassWriter extends ClassFile {
 
         acount += writeFlagAttrs(c.flags());
         acount += writeJavaAnnotations(c.getRawAttributes());
-        acount += writeTypeAnnotations(c.getRawTypeAttributes());
+        acount += writeTypeAnnotations(c.getRawTypeAttributes(), false);
         acount += writeEnclosingMethodAttribute(c);
         acount += writeExtraClassAttributes(c);
 

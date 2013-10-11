@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,7 +37,7 @@ import java.util.NoSuchElementException;
 /** A class for generic linked lists. Links are supposed to be
  *  immutable, the only exception being the incremental construction of
  *  lists via ListBuffers.  List is the main container class in
- *  GJC. Most data structures and algorthms in GJC use lists rather
+ *  GJC. Most data structures and algorithms in GJC use lists rather
  *  than arrays.
  *
  *  <p>Lists are always trailed by a sentinel element, whose head and tail
@@ -97,7 +97,7 @@ public class List<A> extends AbstractCollection<A> implements java.util.List<A> 
     }
 
     public List<A> intersect(List<A> that) {
-        ListBuffer<A> buf = ListBuffer.lb();
+        ListBuffer<A> buf = new ListBuffer<>();
         for (A el : this) {
             if (that.contains(el)) {
                 buf.append(el);
@@ -107,11 +107,24 @@ public class List<A> extends AbstractCollection<A> implements java.util.List<A> 
     }
 
     public List<A> diff(List<A> that) {
-        ListBuffer<A> buf = ListBuffer.lb();
+        ListBuffer<A> buf = new ListBuffer<>();
         for (A el : this) {
             if (!that.contains(el)) {
                 buf.append(el);
             }
+        }
+        return buf.toList();
+    }
+
+    /**
+     * Create a new list from the first {@code n} elements of this list
+     */
+    public List<A> take(int n) {
+        ListBuffer<A> buf = new ListBuffer<>();
+        int count = 0;
+        for (A el : this) {
+            if (count++ == n) break;
+            buf.append(el);
         }
         return buf.toList();
     }
@@ -154,11 +167,11 @@ public class List<A> extends AbstractCollection<A> implements java.util.List<A> 
     }
 
     public static <A> List<A> from(Iterable<? extends A> coll) {
-        List<A> xs = nil();
+        ListBuffer<A> xs = new ListBuffer<>();
         for (A a : coll) {
-            xs = new List<A>(a, xs);
+            xs.append(a);
         }
-        return xs;
+        return xs.toList();
     }
 
     /** Construct a list consisting of a given number of identical elements.

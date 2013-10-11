@@ -123,7 +123,7 @@ public class Log extends AbstractLog {
      * active diagnostic handler.
      */
     public static class DeferredDiagnosticHandler extends DiagnosticHandler {
-        private Queue<JCDiagnostic> deferred = ListBuffer.lb();
+        private Queue<JCDiagnostic> deferred = new ListBuffer<>();
         private final Filter<JCDiagnostic> filter;
 
         public DeferredDiagnosticHandler(Log log) {
@@ -212,6 +212,11 @@ public class Log extends AbstractLog {
      * Keys for expected diagnostics.
      */
     public Set<String> expectDiagKeys;
+
+    /**
+     * Set to true if a compressed diagnostic is reported
+     */
+    public boolean compressedOutput;
 
     /**
      * JavacMessages object used for localization.
@@ -596,6 +601,9 @@ public class Log extends AbstractLog {
                     nerrors++;
                 }
                 break;
+            }
+            if (diagnostic.isFlagSet(JCDiagnostic.DiagnosticFlag.COMPRESSED)) {
+                compressedOutput = true;
             }
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @bug      4494033 7028815 7052425
+ * @bug      4494033 7028815 7052425 8007338 8023608
  * @summary  Run tests on doclet stylesheet.
  * @author   jamieh
  * @library  ../lib/
@@ -34,7 +34,7 @@
 public class TestStylesheet extends JavadocTester {
 
     //Test information.
-    private static final String BUG_ID = "4494033-7028815-7052425";
+    private static final String BUG_ID = "4494033-7028815-7052425-8007338";
 
     //Javadoc arguments.
     private static final String[] ARGS = new String[] {
@@ -44,29 +44,84 @@ public class TestStylesheet extends JavadocTester {
     //Input for string search tests.
     private static final String[][] TEST = {
         {BUG_ID + FS + "stylesheet.css",
-                "/* Javadoc style sheet */"},
+            "/* Javadoc style sheet */"},
         {BUG_ID + FS + "stylesheet.css",
-                "/*" + NL + "Overall document style" + NL + "*/"},
+            "/*" + NL + "Overall document style" + NL + "*/"},
         {BUG_ID + FS + "stylesheet.css",
-                "/*" + NL + "Heading styles" + NL + "*/"},
+            "/*" + NL + "Heading styles" + NL + "*/"},
         {BUG_ID + FS + "stylesheet.css",
-                "/*" + NL + "Navigation bar styles" + NL + "*/"},
+            "/*" + NL + "Navigation bar styles" + NL + "*/"},
         {BUG_ID + FS + "stylesheet.css",
-                "body {" + NL + "    background-color:#ffffff;" + NL +
-                "    color:#353833;" + NL +
-                "    font-family:Arial, Helvetica, sans-serif;" + NL +
-                "    font-size:76%;" + NL + "    margin:0;" + NL + "}"},
+            "body {" + NL + "    background-color:#ffffff;" + NL +
+            "    color:#353833;" + NL +
+            "    font-family:Arial, Helvetica, sans-serif;" + NL +
+            "    font-size:76%;" + NL + "    margin:0;" + NL + "}"},
         {BUG_ID + FS + "stylesheet.css",
-                "ul {" + NL + "    list-style-type:disc;" + NL + "}"},
+            "ul {" + NL + "    list-style-type:disc;" + NL + "}"},
+        {BUG_ID + FS + "stylesheet.css",
+            ".overviewSummary caption, .packageSummary caption, " +
+            ".contentContainer ul.blockList li.blockList caption, " +
+            ".summary caption, .classUseContainer caption, " +
+            ".constantValuesContainer caption {" + NL +
+            "    position:relative;" + NL +
+            "    text-align:left;" + NL +
+            "    background-repeat:no-repeat;" + NL +
+            "    color:#FFFFFF;" + NL +
+            "    font-weight:bold;" + NL +
+            "    clear:none;" + NL +
+            "    overflow:hidden;" + NL +
+            "    padding:0px;" + NL +
+            "    margin:0px;" + NL +
+            "}"},
+        {BUG_ID + FS + "stylesheet.css",
+            ".overviewSummary caption span, .packageSummary caption span, " +
+            ".contentContainer ul.blockList li.blockList caption span, " +
+            ".summary caption span, .classUseContainer caption span, " +
+            ".constantValuesContainer caption span {" + NL +
+            "    white-space:nowrap;" + NL +
+            "    padding-top:8px;" + NL +
+            "    padding-left:8px;" + NL +
+            "    display:inline-block;" + NL +
+            "    float:left;" + NL +
+            "    background-image:url(resources/titlebar.gif);" + NL +
+            "}"},
+        {BUG_ID + FS + "stylesheet.css",
+            ".contentContainer ul.blockList li.blockList caption " +
+            "span.activeTableTab span {" + NL +
+            "    white-space:nowrap;" + NL +
+            "    padding-top:8px;" + NL +
+            "    padding-left:8px;" + NL +
+            "    display:inline-block;" + NL +
+            "    float:left;" + NL +
+            "    background-image:url(resources/activetitlebar.gif);" + NL +
+            "}"},
+        {BUG_ID + FS + "stylesheet.css",
+            ".contentContainer ul.blockList li.blockList caption span.tableTab span {" + NL +
+            "    white-space:nowrap;" + NL +
+            "    padding-top:8px;" + NL +
+            "    padding-left:8px;" + NL +
+            "    display:inline-block;" + NL +
+            "    float:left;" + NL +
+            "    background-image:url(resources/titlebar.gif);" + NL +
+            "}"},
+        {BUG_ID + FS + "stylesheet.css",
+            ".contentContainer ul.blockList li.blockList caption span.tableTab, " +
+            ".contentContainer ul.blockList li.blockList caption span.activeTableTab {" + NL +
+            "    padding-top:0px;" + NL +
+            "    padding-left:0px;" + NL +
+            "    background-image:none;" + NL +
+            "    float:none;" + NL +
+            "    display:inline-block;" + NL +
+            "}"},
         // Test whether a link to the stylesheet file is inserted properly
         // in the class documentation.
         {BUG_ID + FS + "pkg" + FS + "A.html",
-                "<link rel=\"stylesheet\" type=\"text/css\" " +
-                "href=\"../stylesheet.css\" title=\"Style\">"}
+            "<link rel=\"stylesheet\" type=\"text/css\" " +
+            "href=\"../stylesheet.css\" title=\"Style\">"}
     };
     private static final String[][] NEGATED_TEST = {
         {BUG_ID + FS + "stylesheet.css",
-                "* {" + NL + "    margin:0;" + NL + "    padding:0;" + NL + "}"}
+            "* {" + NL + "    margin:0;" + NL + "    padding:0;" + NL + "}"}
     };
 
     /**

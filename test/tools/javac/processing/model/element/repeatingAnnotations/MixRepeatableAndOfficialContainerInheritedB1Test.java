@@ -22,9 +22,8 @@
  */
 
 /*
- * @ignore
  * @test
- * @bug     8004822
+ * @bug     8004822 8007961
  * @author  mnunez
  * @summary Language model api test basics for repeating annotations
  * @library /tools/javac/lib
