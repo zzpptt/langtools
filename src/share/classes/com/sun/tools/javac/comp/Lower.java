@@ -1378,11 +1378,7 @@ public class Lower extends TreeTranslator {
             ref = make.Ident(sym);
             args = make.Idents(md.params);
         } else {
-            Symbol msym = sym;
-            if (sym.owner.isInterface()) {
-                msym = msym.clone(types.supertype(accessor.owner.type).tsym);
-            }
-            ref = make.Select(make.Ident(md.params.head), msym);
+            ref = make.Select(make.Ident(md.params.head), sym);
             args = make.Idents(md.params.tail);
         }
         JCStatement stat;          // The statement accessing the private symbol.
@@ -2176,18 +2172,6 @@ public class Lower extends TreeTranslator {
  * Code for enabling/disabling assertions.
  *************************************************************************/
 
-    private ClassSymbol assertionsDisabledClassCache;
-
-    /**Used to create an auxiliary class to hold $assertionsDisabled for interfaces.
-     */
-    private ClassSymbol assertionsDisabledClass() {
-        if (assertionsDisabledClassCache != null) return assertionsDisabledClassCache;
-
-        assertionsDisabledClassCache = makeEmptyClass(STATIC | SYNTHETIC, outermostClassDef.sym).sym;
-
-        return assertionsDisabledClassCache;
-    }
-
     // This code is not particularly robust if the user has
     // previously declared a member named '$assertionsDisabled'.
     // The same faulty idiom also appears in the translation of
@@ -2198,9 +2182,8 @@ public class Lower extends TreeTranslator {
         // Outermost class may be either true class or an interface.
         ClassSymbol outermostClass = outermostClassDef.sym;
 
-        //only classes can hold a non-public field, look for a usable one:
-        ClassSymbol container = !currentClass.isInterface() ? currentClass :
-                assertionsDisabledClass();
+        // note that this is a class, as an interface can't contain a statement.
+        ClassSymbol container = currentClass;
 
         VarSymbol assertDisabledSym =
             (VarSymbol)lookupSynthetic(dollarAssertionsDisabled,
@@ -2225,16 +2208,6 @@ public class Lower extends TreeTranslator {
             JCVariableDecl assertDisabledDef = make.VarDef(assertDisabledSym,
                                                    notStatus);
             containerDef.defs = containerDef.defs.prepend(assertDisabledDef);
-
-            if (currentClass.isInterface()) {
-                //need to load the assertions enabled/disabled state while
-                //initializing the interface:
-                JCClassDecl currentClassDef = classDef(currentClass);
-                make_at(currentClassDef.pos());
-                JCStatement dummy = make.If(make.QualIdent(assertDisabledSym), make.Skip(), null);
-                JCBlock clinit = make.Block(STATIC, List.<JCStatement>of(dummy));
-                currentClassDef.defs = currentClassDef.defs.prepend(clinit);
-            }
         }
         make_at(pos);
         return makeUnary(NOT, make.Ident(assertDisabledSym));
@@ -2838,9 +2811,20 @@ public class Lower extends TreeTranslator {
         tree.underlyingType = translate(tree.underlyingType);
         // but maintain type annotations in the type.
         if (tree.type.isAnnotated()) {
-            tree.type = tree.underlyingType.type.unannotatedType().annotatedType(tree.type.getAnnotationMirrors());
-        } else if (tree.underlyingType.type.isAnnotated()) {
-            tree.type = tree.underlyingType.type;
+            if (tree.underlyingType.type.isAnnotated()) {
+                // The erasure of a type variable might be annotated.
+                // Merge all annotations.
+                AnnotatedType newat = (AnnotatedType) tree.underlyingType.type;
+                AnnotatedType at = (AnnotatedType) tree.type;
+                at.underlyingType = newat.underlyingType;
+                newat.typeAnnotations = at.typeAnnotations.appendList(newat.typeAnnotations);
+                tree.type = newat;
+            } else {
+                // Create a new AnnotatedType to have the correct tag.
+                AnnotatedType oldat = (AnnotatedType) tree.type;
+                tree.type = new AnnotatedType(tree.underlyingType.type);
+                ((AnnotatedType) tree.type).typeAnnotations = oldat.typeAnnotations;
+            }
         }
         result = tree;
     }
@@ -3945,7 +3929,6 @@ public class Lower extends TreeTranslator {
             accessConstrTags = null;
             accessed = null;
             enumSwitchMap.clear();
-            assertionsDisabledClassCache = null;
         }
         return translated.toList();
     }

@@ -348,16 +348,27 @@ table tr td dl, table tr td dl dt, table tr td dl dd {
 /*
 Table styles
 */
-.overviewSummary, .memberSummary, .typeSummary, .useSummary, .constantsSummary, .deprecatedSummary {
+.contentContainer table, .classUseContainer table, .constantValuesContainer table {
     border-bottom:1px solid #9eadc0;
-    margin:0 0 12px 0px;
     width:100%;
 }
-.overviewSummary, .memberSummary  {
-    padding:0px;
+.contentContainer ul li table, .classUseContainer ul li table, .constantValuesContainer ul li table {
+    width:100%;
 }
-.overviewSummary caption, .memberSummary caption, .typeSummary caption,
-.useSummary caption, .constantsSummary caption, .deprecatedSummary caption {
+.contentContainer .description table, .contentContainer .details table {
+    border-bottom:none;
+}
+.contentContainer ul li table th.colOne, .contentContainer ul li table th.colFirst, .contentContainer ul li table th.colLast, .classUseContainer ul li table th, .constantValuesContainer ul li table th, .contentContainer ul li table td.colOne, .contentContainer ul li table td.colFirst, .contentContainer ul li table td.colLast, .classUseContainer ul li table td, .constantValuesContainer ul li table td{
+    vertical-align:top;
+    padding-right:20px;
+}
+.contentContainer ul li table th.colLast, .classUseContainer ul li table th.colLast,.constantValuesContainer ul li table th.colLast,
+.contentContainer ul li table td.colLast, .classUseContainer ul li table td.colLast,.constantValuesContainer ul li table td.colLast,
+.contentContainer ul li table th.colOne, .classUseContainer ul li table th.colOne,
+.contentContainer ul li table td.colOne, .classUseContainer ul li table td.colOne {
+    padding-right:3px;
+}
+.overviewSummary caption, .packageSummary caption, .contentContainer ul.blockList li.blockList caption, .summary caption, .classUseContainer caption, .constantValuesContainer caption {
     position:relative;
     text-align:left;
     background-repeat:no-repeat;
@@ -368,18 +379,10 @@ Table styles
     padding:0px;
     margin:0px;
 }
-.overviewSummary caption a:link, .memberSummary caption a:link, .typeSummary caption a:link,
-.useSummary caption a:link, .constantsSummary caption a:link, .deprecatedSummary caption a:link,
-.overviewSummary caption a:hover, .memberSummary caption a:hover, .typeSummary caption a:hover,
-.useSummary caption a:hover, .constantsSummary caption a:hover, .deprecatedSummary caption a:hover,
-.overviewSummary caption a:active, .memberSummary caption a:active, .typeSummary caption a:active,
-.useSummary caption a:active, .constantsSummary caption a:active, .deprecatedSummary caption a:active,
-.overviewSummary caption a:visited, .memberSummary caption a:visited, .typeSummary caption a:visited,
-.useSummary caption a:visited, .constantsSummary caption a:visited, .deprecatedSummary caption a:visited {
+caption a:link, caption a:hover, caption a:active, caption a:visited {
     color:#FFFFFF;
 }
-.overviewSummary caption span, .memberSummary caption span, .typeSummary caption span,
-.useSummary caption span, .constantsSummary caption span, .deprecatedSummary caption span {
+.overviewSummary caption span, .packageSummary caption span, .contentContainer ul.blockList li.blockList caption span, .summary caption span, .classUseContainer caption span, .constantValuesContainer caption span {
     white-space:nowrap;
     padding-top:8px;
     padding-left:8px;
@@ -387,7 +390,7 @@ Table styles
     float:left;
     background-image:url(resources/titlebar.gif);
 }
-.memberSummary caption span.activeTableTab span {
+.contentContainer ul.blockList li.blockList caption span.activeTableTab span {
     white-space:nowrap;
     padding-top:8px;
     padding-left:8px;
@@ -395,7 +398,7 @@ Table styles
     float:left;
     background-image:url(resources/activetitlebar.gif);
 }
-.memberSummary caption span.tableTab span {
+.contentContainer ul.blockList li.blockList caption span.tableTab span {
     white-space:nowrap;
     padding-top:8px;
     padding-left:8px;
@@ -403,15 +406,14 @@ Table styles
     float:left;
     background-image:url(resources/titlebar.gif);
 }
-.memberSummary caption span.tableTab, .memberSummary caption span.activeTableTab {
+.contentContainer ul.blockList li.blockList caption span.tableTab, .contentContainer ul.blockList li.blockList caption span.activeTableTab {
     padding-top:0px;
     padding-left:0px;
     background-image:none;
     float:none;
     display:inline-block;
 }
-.overviewSummary .tabEnd, .memberSummary .tabEnd, .typeSummary .tabEnd,
-.useSummary .tabEnd, .constantsSummary .tabEnd, .deprecatedSummary .tabEnd {
+.overviewSummary .tabEnd, .packageSummary .tabEnd, .contentContainer ul.blockList li.blockList .tabEnd, .summary .tabEnd, .classUseContainer .tabEnd, .constantValuesContainer .tabEnd {
     width:10px;
     background-image:url(resources/titlebar_end.gif);
     background-repeat:no-repeat;
@@ -419,7 +421,7 @@ Table styles
     position:relative;
     float:left;
 }
-.memberSummary .activeTableTab .tabEnd {
+.contentContainer ul.blockList li.blockList .activeTableTab .tabEnd {
     width:10px;
     margin-right:5px;
     background-image:url(resources/activetitlebar_end.gif);
@@ -428,7 +430,7 @@ Table styles
     position:relative;
     float:left;
 }
-.memberSummary .tableTab .tabEnd {
+.contentContainer ul.blockList li.blockList .tableTab .tabEnd {
     width:10px;
     margin-right:5px;
     background-image:url(resources/titlebar_end.gif);
@@ -437,22 +439,32 @@ Table styles
     position:relative;
     float:left;
 }
-.overviewSummary td, .memberSummary td, .typeSummary td,
-.useSummary td, .constantsSummary td, .deprecatedSummary td {
+ul.blockList ul.blockList li.blockList table {
+    margin:0 0 12px 0px;
+    width:100%;
+}
+.tableSubHeadingColor {
+    background-color: #EEEEFF;
+}
+.altColor {
+    background-color:#eeeeef;
+}
+.rowColor {
+    background-color:#ffffff;
+}
+.overviewSummary td, .packageSummary td, .contentContainer ul.blockList li.blockList td, .summary td, .classUseContainer td, .constantValuesContainer td {
     text-align:left;
     padding:3px 3px 3px 7px;
 }
-th.colOne, th.colFirst, th.colLast, .useSummary th, .constantsSummary th,
-td.colOne, td.colFirst, td.colLast, .useSummary td, .constantsSummary td{
-    vertical-align:top;
-    padding-right:3px;
-}
-th.colFirst, th.colLast, th.colOne, .constantsSummary th {
+th.colFirst, th.colLast, th.colOne, .constantValuesContainer th {
     background:#dee3e9;
     border-top:1px solid #9eadc0;
     border-bottom:1px solid #9eadc0;
     text-align:left;
     padding:3px 3px 3px 7px;
+}
+td.colOne a:link, td.colOne a:active, td.colOne a:visited, td.colOne a:hover, td.colFirst a:link, td.colFirst a:active, td.colFirst a:visited, td.colFirst a:hover, td.colLast a:link, td.colLast a:active, td.colLast a:visited, td.colLast a:hover, .constantValuesContainer td a:link, .constantValuesContainer td a:active, .constantValuesContainer td a:visited, .constantValuesContainer td a:hover {
+    font-weight:bold;
 }
 td.colFirst, th.colFirst {
     border-left:1px solid #9eadc0;
@@ -465,25 +477,18 @@ td.colOne, th.colOne {
     border-right:1px solid #9eadc0;
     border-left:1px solid #9eadc0;
 }
-.overviewSummary td.colFirst, .overviewSummary th.colFirst,
-.overviewSummary td.colOne, .overviewSummary th.colOne,
-.memberSummary td.colFirst, .memberSummary th.colFirst,
-.memberSummary td.colOne, .memberSummary th.colOne,
-.typeSummary td.colFirst{
+table.overviewSummary  {
+    padding:0px;
+    margin-left:0px;
+}
+table.overviewSummary td.colFirst, table.overviewSummary th.colFirst,
+table.overviewSummary td.colOne, table.overviewSummary th.colOne {
     width:25%;
     vertical-align:middle;
 }
-td.colOne a:link, td.colOne a:active, td.colOne a:visited, td.colOne a:hover, td.colFirst a:link, td.colFirst a:active, td.colFirst a:visited, td.colFirst a:hover, td.colLast a:link, td.colLast a:active, td.colLast a:visited, td.colLast a:hover, .constantValuesContainer td a:link, .constantValuesContainer td a:active, .constantValuesContainer td a:visited, .constantValuesContainer td a:hover {
-    font-weight:bold;
-}
-.tableSubHeadingColor {
-    background-color: #EEEEFF;
-}
-.altColor {
-    background-color:#eeeeef;
-}
-.rowColor {
-    background-color:#ffffff;
+table.packageSummary td.colFirst, table.overviewSummary th.colFirst {
+    width:25%;
+    vertical-align:middle;
 }
 /*
 Content styles
@@ -514,11 +519,9 @@ h1.hidden {
     display:block;
     margin:3px 0 0 0;
 }
-.deprecatedLabel, .descfrmTypeLabel, .memberNameLabel, .memberNameLink,
-.overrideSpecifyLabel, .packageHierarchyLabel, .paramLabel, .returnLabel,
-.seeLabel, .simpleTagLabel, .throwsLabel, .typeNameLabel, .typeNameLink {
+.strong {
     font-weight:bold;
 }
-.deprecationComment, .emphasizedPhrase, .interfaceName {
+.italic {
     font-style:italic;
 }

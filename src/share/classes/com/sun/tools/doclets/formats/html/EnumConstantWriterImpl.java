@@ -73,8 +73,7 @@ public class EnumConstantWriterImpl extends AbstractMemberWriter
             Content memberDetailsTree) {
         memberDetailsTree.addContent(HtmlConstants.START_OF_ENUM_CONSTANT_DETAILS);
         Content enumConstantsDetailsTree = writer.getMemberTreeHeader();
-        enumConstantsDetailsTree.addContent(writer.getMarkerAnchor(
-                SectionName.ENUM_CONSTANT_DETAIL));
+        enumConstantsDetailsTree.addContent(writer.getMarkerAnchor("enum_constant_detail"));
         Content heading = HtmlTree.HEADING(HtmlConstants.DETAILS_HEADING,
                 writer.enumConstantsDetailsLabel);
         enumConstantsDetailsTree.addContent(heading);
@@ -203,8 +202,7 @@ public class EnumConstantWriterImpl extends AbstractMemberWriter
      * {@inheritDoc}
      */
     public void addSummaryAnchor(ClassDoc cd, Content memberTree) {
-        memberTree.addContent(writer.getMarkerAnchor(
-                SectionName.ENUM_CONSTANT_SUMMARY));
+        memberTree.addContent(writer.getMarkerAnchor("enum_constant_summary"));
     }
 
     /**
@@ -224,9 +222,9 @@ public class EnumConstantWriterImpl extends AbstractMemberWriter
      */
     protected void addSummaryLink(LinkInfoImpl.Kind context, ClassDoc cd, ProgramElementDoc member,
             Content tdSummary) {
-        Content memberLink = HtmlTree.SPAN(HtmlStyle.memberNameLink,
+        Content strong = HtmlTree.SPAN(HtmlStyle.strong,
                 writer.getDocLink(context, (MemberDoc) member, member.name(), false));
-        Content code = HtmlTree.CODE(memberLink);
+        Content code = HtmlTree.CODE(strong);
         tdSummary.addContent(code);
     }
 
@@ -265,14 +263,11 @@ public class EnumConstantWriterImpl extends AbstractMemberWriter
      */
     protected Content getNavSummaryLink(ClassDoc cd, boolean link) {
         if (link) {
-            if (cd == null) {
-                return writer.getHyperLink(SectionName.ENUM_CONSTANT_SUMMARY,
-                        writer.getResource("doclet.navEnum"));
-            } else {
-                return writer.getHyperLink(
-                        SectionName.ENUM_CONSTANTS_INHERITANCE,
-                        configuration.getClassName(cd), writer.getResource("doclet.navEnum"));
-            }
+            return writer.getHyperLink((cd == null)?
+                "enum_constant_summary":
+                "enum_constants_inherited_from_class_" +
+                configuration.getClassName(cd),
+                writer.getResource("doclet.navEnum"));
         } else {
             return writer.getResource("doclet.navEnum");
         }
@@ -283,8 +278,7 @@ public class EnumConstantWriterImpl extends AbstractMemberWriter
      */
     protected void addNavDetailLink(boolean link, Content liNav) {
         if (link) {
-            liNav.addContent(writer.getHyperLink(
-                    SectionName.ENUM_CONSTANT_DETAIL,
+            liNav.addContent(writer.getHyperLink("enum_constant_detail",
                     writer.getResource("doclet.navEnum")));
         } else {
             liNav.addContent(writer.getResource("doclet.navEnum"));

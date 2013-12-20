@@ -31,5 +31,5 @@
  * @author Jonathan Gibbons
  * @since 1.6
  */
-@jdk.Exported
+@jdk.Supported
 package com.sun.source.tree;

@@ -38,7 +38,7 @@ import java.util.List;
  *
  * @since 1.8
  */
-@jdk.Exported
+@jdk.Supported
 public interface ThrowsTree extends BlockTagTree {
     ReferenceTree getExceptionName();
     List<? extends DocTree> getDescription();

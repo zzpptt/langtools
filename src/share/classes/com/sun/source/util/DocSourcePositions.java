@@ -36,7 +36,7 @@ import com.sun.source.tree.CompilationUnitTree;
  *
  * @since 1.8
  */
-@jdk.Exported
+@jdk.Supported
 public interface DocSourcePositions extends SourcePositions {
 
     /**

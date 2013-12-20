@@ -41,7 +41,7 @@ import javax.lang.model.element.Name;
  * @author Jonathan Gibbons
  * @since 1.6
  */
-@jdk.Exported
+@jdk.Supported
 public interface IdentifierTree extends ExpressionTree {
     Name getName();
 }

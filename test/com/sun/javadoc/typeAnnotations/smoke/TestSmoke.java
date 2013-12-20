@@ -28,7 +28,6 @@
  *
  * @author   Mahmood Ali <mali>
  * @library  ../../lib/
- * @ignore
  * @build    JavadocTester
  * @build    TestSmoke
  * @run main TestSmoke

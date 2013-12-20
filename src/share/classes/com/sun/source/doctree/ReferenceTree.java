@@ -33,7 +33,7 @@ package com.sun.source.doctree;
  *
  * @since 1.8
  */
-@jdk.Exported
+@jdk.Supported
 public interface ReferenceTree extends DocTree {
     String getSignature();
 }

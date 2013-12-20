@@ -39,7 +39,7 @@ package com.sun.source.tree;
  * @author Jonathan Gibbons
  * @since 1.6
  */
-@jdk.Exported
+@jdk.Supported
 public interface ArrayAccessTree extends ExpressionTree {
     ExpressionTree getExpression();
     ExpressionTree getIndex();

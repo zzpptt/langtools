@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,9 +23,9 @@
 
 /*
  * @test
- * @bug 8003562 8005428 8015912 8027481
+ * @bug 8003562 8005428
  * @summary Basic tests for jdeps tool
- * @build Test p.Foo p.Bar javax.activity.NotCompactProfile
+ * @build Test p.Foo
  * @run main Basic
  */
 
@@ -33,12 +33,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.*;
-import static java.nio.file.StandardCopyOption.*;
 
 public class Basic {
     private static boolean symbolFileExist = initProfiles();
@@ -76,61 +74,45 @@ public class Basic {
              new String[] {"java.lang", "p"},
              new String[] {"compact1", "not found"});
         // test a directory
-        // also test non-SE javax.activity class dependency
         test(new File(testDir, "p"),
-             new String[] {"java.lang", "java.util", "java.lang.management", "javax.activity", "javax.crypto"},
-             new String[] {"compact1", "compact1", "compact3", testDir.getName(), "compact1"},
-             new String[] {"-classpath", testDir.getPath()});
+             new String[] {"java.lang", "java.util", "java.lang.management"},
+             new String[] {"compact1", "compact1", "compact3"});
         // test class-level dependency output
         test(new File(testDir, "Test.class"),
-             new String[] {"java.lang.Object", "java.lang.String", "p.Foo", "p.Bar"},
-             new String[] {"compact1", "compact1", "not found", "not found"},
-             new String[] {"-verbose:class"});
+             new String[] {"java.lang.Object", "p.Foo"},
+             new String[] {"compact1", "not found"},
+             new String[] {"-V", "class"});
         // test -p option
         test(new File(testDir, "Test.class"),
-             new String[] {"p.Foo", "p.Bar"},
-             new String[] {"not found", "not found"},
-             new String[] {"-verbose:class", "-p", "p"});
+             new String[] {"p.Foo"},
+             new String[] {"not found"},
+             new String[] {"--verbose-level=class", "-p", "p"});
         // test -e option
         test(new File(testDir, "Test.class"),
-             new String[] {"p.Foo", "p.Bar"},
-             new String[] {"not found", "not found"},
-             new String[] {"-verbose:class", "-e", "p\\..*"});
+             new String[] {"p.Foo"},
+             new String[] {"not found"},
+             new String[] {"-V", "class", "-e", "p\\..*"});
         test(new File(testDir, "Test.class"),
              new String[] {"java.lang"},
              new String[] {"compact1"},
-             new String[] {"-verbose:package", "-e", "java\\.lang\\..*"});
-        // test -classpath and -include options
+             new String[] {"-V", "package", "-e", "java\\.lang\\..*"});
+        // test -classpath and wildcard options
         test(null,
-             new String[] {"java.lang", "java.util",
-                           "java.lang.management", "javax.crypto"},
-             new String[] {"compact1", "compact1", "compact3", "compact1"},
-             new String[] {"-classpath", testDir.getPath(), "-include", "p.+|Test.class"});
-        test(new File(testDir, "Test.class"),
-             new String[] {"java.lang.Object", "java.lang.String", "p.Foo", "p.Bar"},
-             new String[] {"compact1", "compact1", testDir.getName(), testDir.getName()},
-             new String[] {"-v", "-classpath", testDir.getPath(), "Test.class"});
-
-        // split package p - move p/Foo.class to dir1 and p/Bar.class to dir2
-        Path testClassPath = testDir.toPath();
-        Path dirP = testClassPath.resolve("p");
-        Path dir1 = testClassPath.resolve("dir1");
-        Path subdir1P = dir1.resolve("p");
-        Path dir2 = testClassPath.resolve("dir2");
-        Path subdir2P = dir2.resolve("p");
-        if (!Files.exists(subdir1P))
-            Files.createDirectories(subdir1P);
-        if (!Files.exists(subdir2P))
-            Files.createDirectories(subdir2P);
-        Files.move(dirP.resolve("Foo.class"), subdir1P.resolve("Foo.class"), REPLACE_EXISTING);
-        Files.move(dirP.resolve("Bar.class"), subdir2P.resolve("Bar.class"), REPLACE_EXISTING);
-        StringBuilder cpath = new StringBuilder(testDir.toString());
-        cpath.append(File.pathSeparator).append(dir1.toString());
-        cpath.append(File.pathSeparator).append(dir2.toString());
-        test(new File(testDir, "Test.class"),
-             new String[] {"java.lang.Object", "java.lang.String", "p.Foo", "p.Bar"},
-             new String[] {"compact1", "compact1", dir1.toFile().getName(), dir2.toFile().getName()},
-             new String[] {"-v", "-classpath", cpath.toString(), "Test.class"});
+             new String[] {"com.sun.tools.jdeps", "java.lang", "java.util",
+                           "java.util.regex", "java.io", "java.nio.file",
+                           "java.lang.management"},
+             new String[] {(symbolFileExist? "not found" : "JDK internal API (classes)"),
+                           "compact1", "compact1", "compact1",
+                           "compact1", "compact1", "compact3"},
+             new String[] {"--classpath", testDir.getPath(), "*"});
+        /* Temporary disable this test case.  Test.class has a dependency
+         * on java.lang.String on certain windows machine (8008479).
+         // -v shows intra-dependency
+         test(new File(testDir, "Test.class"),
+              new String[] {"java.lang.Object", "p.Foo"},
+              new String[] {"compact1", testDir.getName()},
+              new String[] {"-v", "--classpath", testDir.getPath(), "Test.class"});
+        */
         return errors;
     }
 
@@ -173,7 +155,7 @@ public class Basic {
     // Use the linePattern to break the given String into lines, applying
     // the pattern to each line to see if we have a match
     private static Map<String,String> findDeps(String out) {
-        Map<String,String> result = new LinkedHashMap<>();
+        Map<String,String> result = new HashMap<>();
         Matcher lm = linePattern.matcher(out);  // Line matcher
         Matcher pm = null;                      // Pattern matcher
         int lines = 0;

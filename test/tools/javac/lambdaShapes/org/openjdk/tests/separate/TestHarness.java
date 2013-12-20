@@ -198,7 +198,7 @@ public class TestHarness {
                 assertEquals(res, value);
             }
         } catch (InvocationTargetException | IllegalAccessException e) {
-            fail("Unexpected exception thrown: " + e.getCause(), e.getCause());
+            fail("Unexpected exception thrown: " + e.getCause());
         }
     }
 
@@ -227,7 +227,8 @@ public class TestHarness {
      * a return type of 'int', and no arguments.
      */
     public void assertInvokeVirtualEquals(int value, Class target) {
-        assertInvokeVirtualEquals(value, target, stdCM, "-1");
+        assertInvokeVirtualEquals(
+            new Integer(value), target, stdCM, "-1");
     }
 
     /**
@@ -259,29 +260,10 @@ public class TestHarness {
         Compiler compiler = compilerLocal.get();
         compiler.setFlags(compilerFlags());
 
-        assertInvokeInterfaceEquals(value, target, new Extends(iface), stdAM);
+        assertInvokeInterfaceEquals(
+            new Integer(value), target, new Extends(iface), stdAM);
 
         compiler.cleanup();
-    }
-
-    protected void assertInvokeInterfaceThrows(java.lang.Class<? extends Throwable> errorClass,
-                                               Class target, Extends iface, AbstractMethod method,
-                                               String... args) {
-        try {
-            assertInvokeInterfaceEquals(0, target, iface, method, args);
-            fail("Expected exception: " + errorClass);
-        }
-        catch (AssertionError e) {
-            Throwable cause = e.getCause();
-            if (cause == null)
-                throw e;
-            else if ((errorClass.isAssignableFrom(cause.getClass()))) {
-                // this is success
-                return;
-            }
-            else
-                throw e;
-        }
     }
 
     /**
@@ -318,7 +300,7 @@ public class TestHarness {
             if (verboseLocal.get() == Boolean.TRUE) {
                 System.out.println(e.getCause());
             }
-            assertTrue(exceptionType.isAssignableFrom(e.getCause().getClass()));
+            assertEquals(e.getCause().getClass(), exceptionType);
         }
         compiler.cleanup();
     }

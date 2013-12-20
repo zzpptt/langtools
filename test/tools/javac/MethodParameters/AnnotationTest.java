@@ -27,7 +27,7 @@
  * @summary javac should generate method parameters correctly.
  * @build Tester
  * @compile -parameters AnnotationTest.java
- * @run main Tester AnnotationTest AnnotationTest.out
+ * @run main Tester AnnotationTest
  */
 
 import java.lang.annotation.*;

@@ -32,7 +32,7 @@ import javax.tools.JavaFileObject;
  *
  * @since 1.8
  */
-@jdk.Exported
+@jdk.Supported
 public interface ErroneousTree extends TextTree {
     /**
      * Gets a diagnostic object giving details about

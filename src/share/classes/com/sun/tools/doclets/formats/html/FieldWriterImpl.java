@@ -74,8 +74,7 @@ public class FieldWriterImpl extends AbstractMemberWriter
             Content memberDetailsTree) {
         memberDetailsTree.addContent(HtmlConstants.START_OF_FIELD_DETAILS);
         Content fieldDetailsTree = writer.getMemberTreeHeader();
-        fieldDetailsTree.addContent(writer.getMarkerAnchor(
-                SectionName.FIELD_DETAIL));
+        fieldDetailsTree.addContent(writer.getMarkerAnchor("field_detail"));
         Content heading = HtmlTree.HEADING(HtmlConstants.DETAILS_HEADING,
                 writer.fieldDetailsLabel);
         fieldDetailsTree.addContent(heading);
@@ -140,11 +139,11 @@ public class FieldWriterImpl extends AbstractMemberWriter
                             holder.typeName() : holder.qualifiedTypeName(),
                             false);
                 Content codeLink = HtmlTree.CODE(link);
-                Content descfrmLabel = HtmlTree.SPAN(HtmlStyle.descfrmTypeLabel, holder.isClass()?
+                Content strong = HtmlTree.SPAN(HtmlStyle.strong, holder.isClass()?
                    writer.descfrmClassLabel : writer.descfrmInterfaceLabel);
-                descfrmLabel.addContent(writer.getSpace());
-                descfrmLabel.addContent(codeLink);
-                fieldDocTree.addContent(HtmlTree.DIV(HtmlStyle.block, descfrmLabel));
+                strong.addContent(writer.getSpace());
+                strong.addContent(codeLink);
+                fieldDocTree.addContent(HtmlTree.DIV(HtmlStyle.block, strong));
                 writer.addInlineComment(field, fieldDocTree);
             }
         }
@@ -225,8 +224,7 @@ public class FieldWriterImpl extends AbstractMemberWriter
      * {@inheritDoc}
      */
     public void addSummaryAnchor(ClassDoc cd, Content memberTree) {
-        memberTree.addContent(writer.getMarkerAnchor(
-                SectionName.FIELD_SUMMARY));
+        memberTree.addContent(writer.getMarkerAnchor("field_summary"));
     }
 
     /**
@@ -234,7 +232,7 @@ public class FieldWriterImpl extends AbstractMemberWriter
      */
     public void addInheritedSummaryAnchor(ClassDoc cd, Content inheritedTree) {
         inheritedTree.addContent(writer.getMarkerAnchor(
-                SectionName.FIELDS_INHERITANCE, configuration.getClassName(cd)));
+                "fields_inherited_from_class_" + configuration.getClassName(cd)));
     }
 
     /**
@@ -258,9 +256,9 @@ public class FieldWriterImpl extends AbstractMemberWriter
      */
     protected void addSummaryLink(LinkInfoImpl.Kind context, ClassDoc cd, ProgramElementDoc member,
             Content tdSummary) {
-        Content memberLink = HtmlTree.SPAN(HtmlStyle.memberNameLink,
+        Content strong = HtmlTree.SPAN(HtmlStyle.strong,
                 writer.getDocLink(context, cd , (MemberDoc) member, member.name(), false));
-        Content code = HtmlTree.CODE(memberLink);
+        Content code = HtmlTree.CODE(strong);
         tdSummary.addContent(code);
     }
 
@@ -295,15 +293,11 @@ public class FieldWriterImpl extends AbstractMemberWriter
      */
     protected Content getNavSummaryLink(ClassDoc cd, boolean link) {
         if (link) {
-            if (cd == null) {
-                return writer.getHyperLink(
-                        SectionName.FIELD_SUMMARY,
-                        writer.getResource("doclet.navField"));
-            } else {
-                return writer.getHyperLink(
-                        SectionName.FIELDS_INHERITANCE,
-                        configuration.getClassName(cd), writer.getResource("doclet.navField"));
-            }
+            return writer.getHyperLink((cd == null)?
+                "field_summary":
+                "fields_inherited_from_class_" +
+                configuration.getClassName(cd),
+                writer.getResource("doclet.navField"));
         } else {
             return writer.getResource("doclet.navField");
         }
@@ -314,8 +308,7 @@ public class FieldWriterImpl extends AbstractMemberWriter
      */
     protected void addNavDetailLink(boolean link, Content liNav) {
         if (link) {
-            liNav.addContent(writer.getHyperLink(
-                    SectionName.FIELD_DETAIL,
+            liNav.addContent(writer.getHyperLink("field_detail",
                     writer.getResource("doclet.navField")));
         } else {
             liNav.addContent(writer.getResource("doclet.navField"));

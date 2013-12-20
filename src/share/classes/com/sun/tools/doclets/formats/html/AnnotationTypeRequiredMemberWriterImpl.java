@@ -89,7 +89,7 @@ public class AnnotationTypeRequiredMemberWriterImpl extends AbstractMemberWriter
             Content memberDetailsTree) {
         if (!writer.printedAnnotationHeading) {
             memberDetailsTree.addContent(writer.getMarkerAnchor(
-                    SectionName.ANNOTATION_TYPE_ELEMENT_DETAIL));
+                    "annotation_type_element_detail"));
             Content heading = HtmlTree.HEADING(HtmlConstants.DETAILS_HEADING,
                     writer.annotationTypeDetailsLabel);
             memberDetailsTree.addContent(heading);
@@ -219,7 +219,7 @@ public class AnnotationTypeRequiredMemberWriterImpl extends AbstractMemberWriter
      */
     public void addSummaryAnchor(ClassDoc cd, Content memberTree) {
         memberTree.addContent(writer.getMarkerAnchor(
-                SectionName.ANNOTATION_TYPE_REQUIRED_ELEMENT_SUMMARY));
+                "annotation_type_required_element_summary"));
     }
 
     /**
@@ -239,9 +239,9 @@ public class AnnotationTypeRequiredMemberWriterImpl extends AbstractMemberWriter
      */
     protected void addSummaryLink(LinkInfoImpl.Kind context, ClassDoc cd, ProgramElementDoc member,
             Content tdSummary) {
-        Content memberLink = HtmlTree.SPAN(HtmlStyle.memberNameLink,
+        Content strong = HtmlTree.SPAN(HtmlStyle.strong,
                 writer.getDocLink(context, (MemberDoc) member, member.name(), false));
-        Content code = HtmlTree.CODE(memberLink);
+        Content code = HtmlTree.CODE(strong);
         tdSummary.addContent(code);
     }
 
@@ -274,8 +274,7 @@ public class AnnotationTypeRequiredMemberWriterImpl extends AbstractMemberWriter
      */
     protected Content getNavSummaryLink(ClassDoc cd, boolean link) {
         if (link) {
-            return writer.getHyperLink(
-                    SectionName.ANNOTATION_TYPE_REQUIRED_ELEMENT_SUMMARY,
+            return writer.getHyperLink("annotation_type_required_element_summary",
                     writer.getResource("doclet.navAnnotationTypeRequiredMember"));
         } else {
             return writer.getResource("doclet.navAnnotationTypeRequiredMember");
@@ -287,8 +286,7 @@ public class AnnotationTypeRequiredMemberWriterImpl extends AbstractMemberWriter
      */
     protected void addNavDetailLink(boolean link, Content liNav) {
         if (link) {
-            liNav.addContent(writer.getHyperLink(
-                    SectionName.ANNOTATION_TYPE_ELEMENT_DETAIL,
+            liNav.addContent(writer.getHyperLink("annotation_type_element_detail",
                     writer.getResource("doclet.navAnnotationTypeMember")));
         } else {
             liNav.addContent(writer.getResource("doclet.navAnnotationTypeMember"));

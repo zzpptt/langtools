@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,8 +23,8 @@
 
 /*
  * @test
- * @bug     4813736 8015073
- * @summary Provide a basic test of access to the Java Model from javac, and error messages
+ * @bug     4813736
+ * @summary Provide a basic test of access to the Java Model from javac
  * @author  Peter von der Ah\u00e9
  * @run main TestJavacTask TestJavacTask.java
  */
@@ -40,36 +40,21 @@ import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
 
 public class TestJavacTask {
-    static final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-    static JavacTaskImpl getTask(File... file) {
+
+    static JavacTaskImpl getTask(JavaCompiler compiler, File... file) {
         StandardJavaFileManager fm = compiler.getStandardFileManager(null, null, null);
         Iterable<? extends JavaFileObject> files =
             fm.getJavaFileObjectsFromFiles(Arrays.asList(file));
         return (JavacTaskImpl)compiler.getTask(null, fm, null, null, null, files);
     }
 
-    static void basicTest(String... args) throws IOException {
+    public static void main(String... args) throws IOException {
+        JavaCompiler tool = ToolProvider.getSystemJavaCompiler();
         String srcdir = System.getProperty("test.src");
         File file = new File(srcdir, args[0]);
-        JavacTaskImpl task = getTask(file);
+        JavacTaskImpl task = getTask(tool, file);
         for (TypeElement clazz : task.enter(task.parse()))
             System.out.println(clazz.getSimpleName());
     }
 
-    static void checkKindError() {
-        final File testFile = new File("Test.java "); // <-note trailing space!
-        try {
-            getTask(testFile);
-        } catch (IllegalArgumentException iae) {
-            if (!iae.getMessage().contains("\"" + testFile.getName() + "\"")) {
-                System.err.println("Got message: " + iae.getMessage());
-                throw new RuntimeException("Error: expected string not found");
-            }
-        }
-    }
-
-    public static void main(String... args) throws IOException {
-        basicTest(args);
-        checkKindError();
-    }
 }

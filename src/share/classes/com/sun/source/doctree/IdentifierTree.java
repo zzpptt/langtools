@@ -35,7 +35,7 @@ import javax.lang.model.element.Name;
  *
  * @since 1.8
  */
-@jdk.Exported
+@jdk.Supported
 public interface IdentifierTree extends DocTree {
     Name getName();
 }

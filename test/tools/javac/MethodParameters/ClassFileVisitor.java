@@ -82,14 +82,15 @@ class ClassFileVisitor extends Tester.Visitor {
      * Read the class and determine some key characteristics, like if it's
      * an enum, or inner class, etc.
      */
-    void visitClass(final String cname, final File cfile, final StringBuilder sb) throws Exception {
+    void visitClass(final String cname, final File cfile, final StringBuilder sb)
+        throws Exception {
         this.cname = cname;
         classFile = ClassFile.read(cfile);
         isEnum = classFile.access_flags.is(AccessFlags.ACC_ENUM);
         isInterface = classFile.access_flags.is(AccessFlags.ACC_INTERFACE);
         isPublic = classFile.access_flags.is(AccessFlags.ACC_PUBLIC);
         isInner = false;
-        isStatic = false;
+        isStatic = true;
         isAnon = false;
 
         Attribute attr = classFile.getAttribute("InnerClasses");
@@ -99,11 +100,10 @@ class ClassFileVisitor extends Tester.Visitor {
         sb.append(isStatic ? "static " : "")
             .append(isPublic ? "public " : "")
             .append(isEnum ? "enum " : isInterface ? "interface " : "class ")
-            .append(cname).append(" -- ");
-        if (isInner) {
-            sb.append(isAnon ? "anon" : "inner");
-        }
-        sb.append("\n");
+            .append(cname).append(" -- ")
+            .append(isInner? "inner " : "" )
+            .append(isAnon ?  "anon" : "")
+            .append("\n");;
 
         for (Method method : classFile.methods) {
             new MethodVisitor().visitMethod(method, sb);
@@ -148,9 +148,7 @@ class ClassFileVisitor extends Tester.Visitor {
         public int mNumParams;
         public boolean mSynthetic;
         public boolean mIsConstructor;
-        public boolean mIsClinit;
         public boolean mIsBridge;
-        public boolean isFinal;
         public String prefix;
 
         void visitMethod(Method method, StringBuilder sb) throws Exception {
@@ -162,13 +160,9 @@ class ClassFileVisitor extends Tester.Visitor {
             mNumParams = -1; // no MethodParameters attribute found
             mSynthetic = method.access_flags.is(AccessFlags.ACC_SYNTHETIC);
             mIsConstructor = mName.equals("<init>");
-            mIsClinit = mName.equals("<clinit>");
             prefix = cname + "." + mName + "() - ";
             mIsBridge = method.access_flags.is(AccessFlags.ACC_BRIDGE);
 
-            if (mIsClinit) {
-                sb = new StringBuilder(); // Discard output
-            }
             sb.append(cname).append(".").append(mName).append("(");
 
             for (Attribute a : method.attributes) {
@@ -176,18 +170,9 @@ class ClassFileVisitor extends Tester.Visitor {
             }
             if (mNumParams == -1) {
                 if (mSynthetic) {
-                    // We don't generate MethodParameters attribute for synthetic
-                    // methods, so we are creating a parameter pattern to match
-                    // ReflectionVisitor API output.
-                    for (int i = 0; i < mParams; i++) {
-                        if (i == 0)
-                            sb.append("arg").append(i);
-                        else
-                            sb.append(", arg").append(i);
-                    }
-                    sb.append(")/*synthetic*/");
+                    sb.append("<none>)!!");
                 } else {
-                    sb.append(")");
+                    sb.append("<none>)");
                 }
             }
             sb.append("\n");
@@ -232,7 +217,7 @@ class ClassFileVisitor extends Tester.Visitor {
             String sep = "";
             String userParam = null;
             for (int x = 0; x <  mNumParams; x++) {
-                isFinal = (mp.method_parameter_table[x].flags & AccessFlags.ACC_FINAL) != 0;
+
                 // IMPL: Assume all parameters are named, something.
                 int cpi = mp.method_parameter_table[x].name_index;
                 if (cpi == 0) {
@@ -244,8 +229,6 @@ class ClassFileVisitor extends Tester.Visitor {
                 String param = null;
                 try {
                     param = classFile.constant_pool.getUTF8Value(cpi);
-                    if (isFinal)
-                        param = "final " + param;
                     sb.append(sep).append(param);
                     sep = ", ";
                 } catch(ConstantPoolException e) {
@@ -256,7 +239,7 @@ class ClassFileVisitor extends Tester.Visitor {
 
 
                 // Check availability, flags and special names
-                int check = checkParam(mp, param, x, sb, isFinal);
+                int check = checkParam(mp, param, x, sb);
                 if (check < 0) {
                     return null;
                 }
@@ -270,14 +253,8 @@ class ClassFileVisitor extends Tester.Visitor {
                     char c = userParam.charAt(0);
                     expect =  (++c) + userParam;
                 }
-                if(isFinal && expect != null)
-                    expect = "final " + expect;
                 if (check > 0) {
-                    if(isFinal) {
-                        userParam = param.substring(6);
-                    } else {
                     userParam = param;
-                }
                 }
                 if (expect != null && !param.equals(expect)) {
                     error(prefix + "param[" + x + "]='"
@@ -286,7 +263,7 @@ class ClassFileVisitor extends Tester.Visitor {
                 }
             }
             if (mSynthetic) {
-                sb.append(")/*synthetic*/");
+                sb.append(")!!");
             } else {
                 sb.append(")");
             }
@@ -301,7 +278,7 @@ class ClassFileVisitor extends Tester.Visitor {
          * explicitly declared parameter.
          */
         int checkParam(MethodParameters_attribute mp, String param, int index,
-                       StringBuilder sb, boolean isFinal) {
+                       StringBuilder sb) {
 
             boolean synthetic = (mp.method_parameter_table[index].flags
                                  & AccessFlags.ACC_SYNTHETIC) != 0;
@@ -327,13 +304,9 @@ class ClassFileVisitor extends Tester.Visitor {
                     }
                 } else if (index == 0) {
                     if (isAnon) {
-                        expect = "this\\$[0-9]+";
                         allowMandated = true;
-                        if (isFinal) {
-                            expect = "final this\\$[0-9]+";
-                        }
+                        expect = "this\\$[0-n]*";
                     } else if (isInner && !isStatic) {
-                        expect = "this\\$[0-9]+";
                         allowMandated = true;
                         if (!isPublic) {
                             // some but not all non-public inner classes
@@ -341,9 +314,7 @@ class ClassFileVisitor extends Tester.Visitor {
                             // the test a bit of slack and allow either.
                             allowSynthetic = true;
                         }
-                        if (isFinal) {
-                            expect = "final this\\$[0-9]+";
-                        }
+                        expect = "this\\$[0-n]*";
                     }
                 }
             } else if (isEnum && mNumParams == 1 && index == 0 && mName.equals("valueOf")) {
@@ -356,8 +327,8 @@ class ClassFileVisitor extends Tester.Visitor {
                  */
                 expect = null;
             }
-            if (mandated) sb.append("/*implicit*/");
-            if (synthetic) sb.append("/*synthetic*/");
+            if (mandated) sb.append("!");
+            if (synthetic) sb.append("!!");
 
             // IMPL: our rules a somewhat fuzzy, sometimes allowing both mandated
             // and synthetic. However, a parameters cannot be both.

@@ -46,7 +46,7 @@ import javax.lang.model.element.Name;
  * @author Jonathan Gibbons
  * @since 1.6
  */
-@jdk.Exported
+@jdk.Supported
 public interface TypeParameterTree extends Tree {
     Name getName();
     List<? extends Tree> getBounds();

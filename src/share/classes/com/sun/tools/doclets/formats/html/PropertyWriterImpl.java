@@ -70,8 +70,7 @@ public class PropertyWriterImpl extends AbstractMemberWriter
             Content memberDetailsTree) {
         memberDetailsTree.addContent(HtmlConstants.START_OF_PROPERTY_DETAILS);
         Content propertyDetailsTree = writer.getMemberTreeHeader();
-        propertyDetailsTree.addContent(writer.getMarkerAnchor(
-                SectionName.PROPERTY_DETAIL));
+        propertyDetailsTree.addContent(writer.getMarkerAnchor("property_detail"));
         Content heading = HtmlTree.HEADING(HtmlConstants.DETAILS_HEADING,
                 writer.propertyDetailsLabel);
         propertyDetailsTree.addContent(heading);
@@ -136,11 +135,11 @@ public class PropertyWriterImpl extends AbstractMemberWriter
                             holder.typeName() : holder.qualifiedTypeName(),
                             false);
                 Content codeLink = HtmlTree.CODE(link);
-                Content descfrmLabel = HtmlTree.SPAN(HtmlStyle.descfrmTypeLabel, holder.isClass()?
+                Content strong = HtmlTree.SPAN(HtmlStyle.strong, holder.isClass()?
                    writer.descfrmClassLabel : writer.descfrmInterfaceLabel);
-                descfrmLabel.addContent(writer.getSpace());
-                descfrmLabel.addContent(codeLink);
-                propertyDocTree.addContent(HtmlTree.DIV(HtmlStyle.block, descfrmLabel));
+                strong.addContent(writer.getSpace());
+                strong.addContent(codeLink);
+                propertyDocTree.addContent(HtmlTree.DIV(HtmlStyle.block, strong));
                 writer.addInlineComment(property, propertyDocTree);
             }
         }
@@ -221,8 +220,7 @@ public class PropertyWriterImpl extends AbstractMemberWriter
      * {@inheritDoc}
      */
     public void addSummaryAnchor(ClassDoc cd, Content memberTree) {
-        memberTree.addContent(writer.getMarkerAnchor(
-                SectionName.PROPERTY_SUMMARY));
+        memberTree.addContent(writer.getMarkerAnchor("property_summary"));
     }
 
     /**
@@ -230,8 +228,7 @@ public class PropertyWriterImpl extends AbstractMemberWriter
      */
     public void addInheritedSummaryAnchor(ClassDoc cd, Content inheritedTree) {
         inheritedTree.addContent(writer.getMarkerAnchor(
-                SectionName.PROPERTIES_INHERITANCE,
-                configuration.getClassName(cd)));
+                "properties_inherited_from_class_" + configuration.getClassName(cd)));
     }
 
     /**
@@ -255,14 +252,14 @@ public class PropertyWriterImpl extends AbstractMemberWriter
      */
     protected void addSummaryLink(LinkInfoImpl.Kind context, ClassDoc cd, ProgramElementDoc member,
             Content tdSummary) {
-        Content memberLink = HtmlTree.SPAN(HtmlStyle.memberNameLink,
+        Content strong = HtmlTree.SPAN(HtmlStyle.strong,
                 writer.getDocLink(context, cd,
                 (MemberDoc) member,
                 member.name().substring(0, member.name().lastIndexOf("Property")),
                 false,
                 true));
 
-        Content code = HtmlTree.CODE(memberLink);
+        Content code = HtmlTree.CODE(strong);
         tdSummary.addContent(code);
     }
 
@@ -300,15 +297,11 @@ public class PropertyWriterImpl extends AbstractMemberWriter
      */
     protected Content getNavSummaryLink(ClassDoc cd, boolean link) {
         if (link) {
-            if (cd == null) {
-                return writer.getHyperLink(
-                SectionName.PROPERTY_SUMMARY,
+            return writer.getHyperLink((cd == null)?
+                "property_summary":
+                "properties_inherited_from_class_" +
+                configuration.getClassName(cd),
                 writer.getResource("doclet.navProperty"));
-            } else {
-                return writer.getHyperLink(
-                SectionName.PROPERTIES_INHERITANCE,
-                configuration.getClassName(cd), writer.getResource("doclet.navProperty"));
-            }
         } else {
             return writer.getResource("doclet.navProperty");
         }
@@ -319,8 +312,7 @@ public class PropertyWriterImpl extends AbstractMemberWriter
      */
     protected void addNavDetailLink(boolean link, Content liNav) {
         if (link) {
-            liNav.addContent(writer.getHyperLink(
-                    SectionName.PROPERTY_DETAIL,
+            liNav.addContent(writer.getHyperLink("property_detail",
                     writer.getResource("doclet.navProperty")));
         } else {
             liNav.addContent(writer.getResource("doclet.navProperty"));

@@ -1,6 +1,6 @@
 /*
  * @test /nodynamiccopyright/
- * @bug 8004832 8026368
+ * @bug 8004832
  * @summary Add new doclint package
  * @library ..
  * @build DocLintTester
@@ -26,9 +26,4 @@
  * <ul></ul>
  * <ul><li></li></ul>
  */
-public class TrimmingEmptyTag {
-    /** <p> */
-    public void implicitParaEnd_endOfComment() { }
-    /** <p> <ul><li>text</ul> */
-    public void implicitParaEnd_nextBlockTag() { }
-}
+public class TrimmingEmptyTag { }

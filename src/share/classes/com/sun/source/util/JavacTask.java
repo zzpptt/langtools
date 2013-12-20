@@ -48,7 +48,7 @@ import com.sun.tools.javac.util.Context;
  * @author Jonathan Gibbons
  * @since 1.6
  */
-@jdk.Exported
+@jdk.Supported
 public abstract class JavacTask implements CompilationTask {
 
     /**

@@ -73,11 +73,15 @@ public class ConstructorDocImpl
     /**
      * Get the name.
      *
-     * @return the name of the member.
+     * @return the name of the member qualified by class (but not package)
      */
     public String name() {
         ClassSymbol c = sym.enclClass();
-        return c.name.toString();
+        String n = c.name.toString();
+        for (c = c.owner.enclClass(); c != null; c = c.owner.enclClass()) {
+            n = c.name.toString() + "." + n;
+        }
+        return n;
     }
 
     /**

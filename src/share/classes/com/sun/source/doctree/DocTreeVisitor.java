@@ -54,7 +54,7 @@ package com.sun.source.doctree;
  *
  * @since 1.8
  */
-@jdk.Exported
+@jdk.Supported
 public interface DocTreeVisitor<R,P> {
     R visitAttribute(AttributeTree node, P p);
     R visitAuthor(AuthorTree node, P p);

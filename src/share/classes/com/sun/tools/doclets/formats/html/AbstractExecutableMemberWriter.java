@@ -101,10 +101,10 @@ public abstract class AbstractExecutableMemberWriter extends AbstractMemberWrite
             Content tdSummary) {
         ExecutableMemberDoc emd = (ExecutableMemberDoc)member;
         String name = emd.name();
-        Content memberLink = HtmlTree.SPAN(HtmlStyle.memberNameLink,
+        Content strong = HtmlTree.SPAN(HtmlStyle.strong,
                 writer.getDocLink(context, cd, (MemberDoc) emd,
                 name, false));
-        Content code = HtmlTree.CODE(memberLink);
+        Content code = HtmlTree.CODE(strong);
         addParameters(emd, false, code, name.length() - 1);
         tdSummary.addContent(code);
     }
@@ -305,6 +305,6 @@ public abstract class AbstractExecutableMemberWriter extends AbstractMemberWrite
             buf.append(t.dimension());
         }
         buf.append(")");
-        return foundTypeVariable ? writer.getName(buf.toString()) : null;
+        return foundTypeVariable ? buf.toString() : null;
     }
 }

@@ -85,8 +85,7 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
             Content memberDetailsTree) {
         memberDetailsTree.addContent(HtmlConstants.START_OF_METHOD_DETAILS);
         Content methodDetailsTree = writer.getMemberTreeHeader();
-        methodDetailsTree.addContent(writer.getMarkerAnchor(
-                SectionName.METHOD_DETAIL));
+        methodDetailsTree.addContent(writer.getMarkerAnchor("method_detail"));
         Content heading = HtmlTree.HEADING(HtmlConstants.DETAILS_HEADING,
                 writer.methodDetailsLabel);
         methodDetailsTree.addContent(heading);
@@ -160,11 +159,11 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
                             holder.typeName() : holder.qualifiedTypeName(),
                             false);
                 Content codelLink = HtmlTree.CODE(link);
-                Content descfrmLabel = HtmlTree.SPAN(HtmlStyle.descfrmTypeLabel, holder.asClassDoc().isClass()?
+                Content strong = HtmlTree.SPAN(HtmlStyle.strong, holder.asClassDoc().isClass()?
                     writer.descfrmClassLabel : writer.descfrmInterfaceLabel);
-                descfrmLabel.addContent(writer.getSpace());
-                descfrmLabel.addContent(codelLink);
-                methodDocTree.addContent(HtmlTree.DIV(HtmlStyle.block, descfrmLabel));
+                strong.addContent(writer.getSpace());
+                strong.addContent(codelLink);
+                methodDocTree.addContent(HtmlTree.DIV(HtmlStyle.block, strong));
                 writer.addInlineComment(method, methodDocTree);
             }
         }
@@ -245,8 +244,7 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
      * {@inheritDoc}
      */
     public void addSummaryAnchor(ClassDoc cd, Content memberTree) {
-        memberTree.addContent(writer.getMarkerAnchor(
-                SectionName.METHOD_SUMMARY));
+        memberTree.addContent(writer.getMarkerAnchor("method_summary"));
     }
 
     /**
@@ -254,7 +252,8 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
      */
     public void addInheritedSummaryAnchor(ClassDoc cd, Content inheritedTree) {
         inheritedTree.addContent(writer.getMarkerAnchor(
-                SectionName.METHODS_INHERITANCE, configuration.getClassName(cd)));
+                "methods_inherited_from_class_" +
+                configuration.getClassName(cd)));
     }
 
     /**
@@ -310,7 +309,7 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
                 label = writer.specifiedByLabel;
                 context = LinkInfoImpl.Kind.METHOD_SPECIFIED_BY;
             }
-            Content dt = HtmlTree.DT(HtmlTree.SPAN(HtmlStyle.overrideSpecifyLabel, label));
+            Content dt = HtmlTree.DT(HtmlTree.SPAN(HtmlStyle.strong, label));
             dl.addContent(dt);
             Content overriddenTypeLink =
                     writer.getLink(new LinkInfoImpl(writer.configuration, context, overriddenType));
@@ -319,7 +318,7 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
             Content methlink = writer.getLink(
                     new LinkInfoImpl(writer.configuration, LinkInfoImpl.Kind.MEMBER,
                     overriddenType.asClassDoc())
-                    .where(writer.getName(writer.getAnchor(method))).label(name));
+                    .where(writer.getAnchor(method)).label(name));
             Content codeMethLink = HtmlTree.CODE(methlink);
             Content dd = HtmlTree.DD(codeMethLink);
             dd.addContent(writer.getSpace());
@@ -365,7 +364,7 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
             Content intfaclink = writer.getLink(new LinkInfoImpl(
                     writer.configuration, LinkInfoImpl.Kind.METHOD_SPECIFIED_BY, intfac));
             Content codeIntfacLink = HtmlTree.CODE(intfaclink);
-            Content dt = HtmlTree.DT(HtmlTree.SPAN(HtmlStyle.overrideSpecifyLabel, writer.specifiedByLabel));
+            Content dt = HtmlTree.DT(HtmlTree.SPAN(HtmlStyle.strong, writer.specifiedByLabel));
             dl.addContent(dt);
             Content methlink = writer.getDocLink(
                     LinkInfoImpl.Kind.MEMBER, implementedMeth,
@@ -401,15 +400,11 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
      */
     protected Content getNavSummaryLink(ClassDoc cd, boolean link) {
         if (link) {
-            if (cd == null) {
-                return writer.getHyperLink(
-                        SectionName.METHOD_SUMMARY,
-                        writer.getResource("doclet.navMethod"));
-            } else {
-                return writer.getHyperLink(
-                        SectionName.METHODS_INHERITANCE,
-                        configuration.getClassName(cd), writer.getResource("doclet.navMethod"));
-            }
+            return writer.getHyperLink((cd == null)?
+                "method_summary":
+                "methods_inherited_from_class_" +
+                configuration.getClassName(cd),
+                writer.getResource("doclet.navMethod"));
         } else {
             return writer.getResource("doclet.navMethod");
         }
@@ -420,8 +415,8 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
      */
     protected void addNavDetailLink(boolean link, Content liNav) {
         if (link) {
-            liNav.addContent(writer.getHyperLink(
-                    SectionName.METHOD_DETAIL, writer.getResource("doclet.navMethod")));
+            liNav.addContent(writer.getHyperLink("method_detail",
+                    writer.getResource("doclet.navMethod")));
         } else {
             liNav.addContent(writer.getResource("doclet.navMethod"));
         }

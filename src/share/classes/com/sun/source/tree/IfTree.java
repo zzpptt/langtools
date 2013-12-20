@@ -45,7 +45,7 @@ package com.sun.source.tree;
  * @author Jonathan Gibbons
  * @since 1.6
  */
-@jdk.Exported
+@jdk.Supported
 public interface IfTree extends StatementTree {
     ExpressionTree getCondition();
     StatementTree getThenStatement();

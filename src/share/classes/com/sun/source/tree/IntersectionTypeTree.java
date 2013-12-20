@@ -34,7 +34,7 @@ import java.util.List;
  *
  * @since 1.8
  */
-@jdk.Exported
+@jdk.Supported
 public interface IntersectionTypeTree extends Tree {
     List<? extends Tree> getBounds();
 }

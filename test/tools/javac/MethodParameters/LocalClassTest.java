@@ -27,7 +27,7 @@
  * @summary javac should generate method parameters correctly.
  * @build Tester
  * @compile -parameters LocalClassTest.java
- * @run main Tester LocalClassTest LocalClassTest.out
+ * @run main Tester LocalClassTest
  */
 
 class LocalClassTest {

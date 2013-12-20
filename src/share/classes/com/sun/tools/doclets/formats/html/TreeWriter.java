@@ -131,7 +131,7 @@ public class TreeWriter extends AbstractTreeWriter {
             return;
         }
         if (!classesonly) {
-            Content span = HtmlTree.SPAN(HtmlStyle.packageHierarchyLabel,
+            Content span = HtmlTree.SPAN(HtmlStyle.strong,
                     getResource("doclet.Package_Hierarchies"));
             contentTree.addContent(span);
             HtmlTree ul = new HtmlTree(HtmlTag.UL);
