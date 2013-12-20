@@ -1877,7 +1877,7 @@ public class ClassReader {
         }
     }
 
-    class AnnotationDefaultCompleter extends AnnotationDeproxy implements Annotate.Worker {
+    class AnnotationDefaultCompleter extends AnnotationDeproxy implements Annotate.Annotator {
         final MethodSymbol sym;
         final Attribute value;
         final JavaFileObject classFile = currentClassFile;
@@ -1889,8 +1889,8 @@ public class ClassReader {
             this.sym = sym;
             this.value = value;
         }
-        // implement Annotate.Worker.run()
-        public void run() {
+        // implement Annotate.Annotator.enterAnnotation()
+        public void enterAnnotation() {
             JavaFileObject previousClassFile = currentClassFile;
             try {
                 // Reset the interim value set earlier in
@@ -1904,7 +1904,7 @@ public class ClassReader {
         }
     }
 
-    class AnnotationCompleter extends AnnotationDeproxy implements Annotate.Worker {
+    class AnnotationCompleter extends AnnotationDeproxy implements Annotate.Annotator {
         final Symbol sym;
         final List<CompoundAnnotationProxy> l;
         final JavaFileObject classFile;
@@ -1917,8 +1917,8 @@ public class ClassReader {
             this.l = l;
             this.classFile = currentClassFile;
         }
-        // implement Annotate.Worker.run()
-        public void run() {
+        // implement Annotate.Annotator.enterAnnotation()
+        public void enterAnnotation() {
             JavaFileObject previousClassFile = currentClassFile;
             try {
                 currentClassFile = classFile;
@@ -1955,7 +1955,7 @@ public class ClassReader {
         }
 
         @Override
-        public void run() {
+        public void enterAnnotation() {
             JavaFileObject previousClassFile = currentClassFile;
             try {
                 currentClassFile = classFile;
@@ -1993,15 +1993,11 @@ public class ClassReader {
                 (flags & ABSTRACT) == 0 && !name.equals(names.clinit)) {
             if (majorVersion > Target.JDK1_8.majorVersion ||
                     (majorVersion == Target.JDK1_8.majorVersion && minorVersion >= Target.JDK1_8.minorVersion)) {
-                if ((flags & STATIC) == 0) {
-                    currentOwner.flags_field |= DEFAULT;
-                    flags |= DEFAULT | ABSTRACT;
-                }
+                currentOwner.flags_field |= DEFAULT;
+                flags |= DEFAULT | ABSTRACT;
             } else {
                 //protect against ill-formed classfiles
-                throw badClassFile((flags & STATIC) == 0 ? "invalid.default.interface" : "invalid.static.interface",
-                                   Integer.toString(majorVersion),
-                                   Integer.toString(minorVersion));
+                throw new CompletionFailure(currentOwner, "default method found in pre JDK 8 classfile");
             }
         }
         if (name == names.init && currentOwner.hasOuterInstance()) {
@@ -2405,6 +2401,8 @@ public class ClassReader {
             return c;
     }
 
+    private boolean suppressFlush = false;
+
     /** Completion for classes to be loaded. Before a class is loaded
      *  we make sure its enclosing class (if any) is loaded.
      */
@@ -2412,14 +2410,13 @@ public class ClassReader {
         if (sym.kind == TYP) {
             ClassSymbol c = (ClassSymbol)sym;
             c.members_field = new Scope.ErrorScope(c); // make sure it's always defined
-            annotate.enterStart();
+            boolean saveSuppressFlush = suppressFlush;
+            suppressFlush = true;
             try {
                 completeOwners(c.owner);
                 completeEnclosing(c);
             } finally {
-                // The flush needs to happen only after annotations
-                // are filled in.
-                annotate.enterDoneWithoutFlush();
+                suppressFlush = saveSuppressFlush;
             }
             fillIn(c);
         } else if (sym.kind == PCK) {
@@ -2430,7 +2427,7 @@ public class ClassReader {
                 throw new CompletionFailure(sym, ex.getLocalizedMessage()).initCause(ex);
             }
         }
-        if (!filling)
+        if (!filling && !suppressFlush)
             annotate.flush(); // finish attaching annotations
     }
 

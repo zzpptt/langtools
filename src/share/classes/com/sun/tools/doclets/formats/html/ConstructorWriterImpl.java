@@ -97,8 +97,7 @@ public class ConstructorWriterImpl extends AbstractExecutableMemberWriter
             Content memberDetailsTree) {
         memberDetailsTree.addContent(HtmlConstants.START_OF_CONSTRUCTOR_DETAILS);
         Content constructorDetailsTree = writer.getMemberTreeHeader();
-        constructorDetailsTree.addContent(writer.getMarkerAnchor(
-                SectionName.CONSTRUCTOR_DETAIL));
+        constructorDetailsTree.addContent(writer.getMarkerAnchor("constructor_detail"));
         Content heading = HtmlTree.HEADING(HtmlConstants.DETAILS_HEADING,
                 writer.constructorDetailsLabel);
         constructorDetailsTree.addContent(heading);
@@ -257,8 +256,7 @@ public class ConstructorWriterImpl extends AbstractExecutableMemberWriter
      * {@inheritDoc}
      */
     public void addSummaryAnchor(ClassDoc cd, Content memberTree) {
-        memberTree.addContent(writer.getMarkerAnchor(
-                SectionName.CONSTRUCTOR_SUMMARY));
+        memberTree.addContent(writer.getMarkerAnchor("constructor_summary"));
     }
 
     /**
@@ -282,7 +280,7 @@ public class ConstructorWriterImpl extends AbstractExecutableMemberWriter
      */
     protected Content getNavSummaryLink(ClassDoc cd, boolean link) {
         if (link) {
-            return writer.getHyperLink(SectionName.CONSTRUCTOR_SUMMARY,
+            return writer.getHyperLink("constructor_summary",
                     writer.getResource("doclet.navConstructor"));
         } else {
             return writer.getResource("doclet.navConstructor");
@@ -294,8 +292,7 @@ public class ConstructorWriterImpl extends AbstractExecutableMemberWriter
      */
     protected void addNavDetailLink(boolean link, Content liNav) {
         if (link) {
-            liNav.addContent(writer.getHyperLink(
-                    SectionName.CONSTRUCTOR_DETAIL,
+            liNav.addContent(writer.getHyperLink("constructor_detail",
                     writer.getResource("doclet.navConstructor")));
         } else {
             liNav.addContent(writer.getResource("doclet.navConstructor"));

@@ -36,7 +36,7 @@ import javax.lang.model.element.Name;
  *
  * @since 1.8
  */
-@jdk.Exported
+@jdk.Supported
 public interface StartElementTree extends DocTree {
     Name getName();
     List<? extends DocTree> getAttributes();

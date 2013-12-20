@@ -35,12 +35,10 @@ import java.lang.annotation.*;
 
 class TypeVariableCycleTest<CTV> {
     <MTV extends  @TA CTV> MTV cast(CTV p) {
-        return (@TB MTV) p;
+        return (@TA MTV) p;
     }
 }
 
-@Target(ElementType.TYPE_USE)
+@Target({ElementType.TYPE_USE, ElementType.TYPE_PARAMETER})
 @interface TA {}
 
-@Target(ElementType.TYPE_USE)
-@interface TB {}

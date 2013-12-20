@@ -3002,9 +3002,8 @@ public class JavacParser implements Parser {
         int pos = token.pos;
         Name name;
         if (lambdaParameter && token.kind == UNDERSCORE) {
-            log.error(pos, "underscore.as.identifier.in.lambda");
+            syntaxError(pos, "expected", IDENTIFIER);
             name = token.name();
-            nextToken();
         } else {
             if (allowThisIdent) {
                 JCExpression pn = qualident(false);

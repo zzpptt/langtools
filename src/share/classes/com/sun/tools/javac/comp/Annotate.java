@@ -37,7 +37,6 @@ import com.sun.tools.javac.tree.JCTree.*;
 import static com.sun.tools.javac.code.TypeTag.ARRAY;
 import static com.sun.tools.javac.code.TypeTag.CLASS;
 import static com.sun.tools.javac.tree.JCTree.Tag.*;
-import javax.lang.model.type.ErrorType;
 
 /** Enter annotations on symbols.  Annotations accumulate in a queue,
  *  which is processed at the top level of any set of recursive calls
@@ -88,34 +87,29 @@ public class Annotate {
 
     private int enterCount = 0;
 
-    ListBuffer<Worker> q = new ListBuffer<Worker>();
-    ListBuffer<Worker> typesQ = new ListBuffer<Worker>();
-    ListBuffer<Worker> repeatedQ = new ListBuffer<Worker>();
-    ListBuffer<Worker> afterRepeatedQ = new ListBuffer<Worker>();
-    ListBuffer<Worker> validateQ = new ListBuffer<Worker>();
+    ListBuffer<Annotator> q = new ListBuffer<Annotator>();
+    ListBuffer<Annotator> typesQ = new ListBuffer<Annotator>();
+    ListBuffer<Annotator> repeatedQ = new ListBuffer<Annotator>();
+    ListBuffer<Annotator> afterRepeatedQ = new ListBuffer<Annotator>();
 
-    public void earlier(Worker a) {
+    public void earlier(Annotator a) {
         q.prepend(a);
     }
 
-    public void normal(Worker a) {
+    public void normal(Annotator a) {
         q.append(a);
     }
 
-    public void typeAnnotation(Worker a) {
+    public void typeAnnotation(Annotator a) {
         typesQ.append(a);
     }
 
-    public void repeated(Worker a) {
+    public void repeated(Annotator a) {
         repeatedQ.append(a);
     }
 
-    public void afterRepeated(Worker a) {
+    public void afterRepeated(Annotator a) {
         afterRepeatedQ.append(a);
-    }
-
-    public void validate(Worker a) {
-        validateQ.append(a);
     }
 
     /** Called when the Enter phase starts. */
@@ -129,45 +123,34 @@ public class Annotate {
         flush();
     }
 
-    /** Variant which allows for a delayed flush of annotations.
-     * Needed by ClassReader */
-    public void enterDoneWithoutFlush() {
-        enterCount--;
-    }
-
     public void flush() {
         if (enterCount != 0) return;
         enterCount++;
         try {
             while (q.nonEmpty()) {
-                q.next().run();
+                q.next().enterAnnotation();
             }
             while (typesQ.nonEmpty()) {
-                typesQ.next().run();
+                typesQ.next().enterAnnotation();
             }
             while (repeatedQ.nonEmpty()) {
-                repeatedQ.next().run();
+                repeatedQ.next().enterAnnotation();
             }
             while (afterRepeatedQ.nonEmpty()) {
-                afterRepeatedQ.next().run();
-            }
-            while (validateQ.nonEmpty()) {
-                validateQ.next().run();
+                afterRepeatedQ.next().enterAnnotation();
             }
         } finally {
             enterCount--;
         }
     }
 
-    /** A client that needs to run during {@link #flush()} registers an worker
-     *  into one of the queues defined in this class. The queues are: {@link #earlier(Worker)},
-     *  {@link #normal(Worker)}, {@link #typeAnnotation(Worker)}, {@link #repeated(Worker)},
-     *  {@link #afterRepeated(Worker)}, {@link #validate(Worker)}.
-     *  The {@link Worker#run()} method will called inside the {@link #flush()}
-     *  call. Queues are empties in the abovementioned order.
+    /** A client that has annotations to add registers an annotator,
+     *  the method it will use to add the annotation.  There are no
+     *  parameters; any needed data should be captured by the
+     *  Annotator.
      */
-    public interface Worker {
-        void run();
+    public interface Annotator {
+        void enterAnnotation();
         String toString();
     }
 
@@ -212,12 +195,12 @@ public class Annotate {
         }
 
         /**
-         * Queue the Worker a on the repeating annotations queue of the
+         * Queue the Annotator a on the repeating annotations queue of the
          * Annotate instance this context belongs to.
          *
-         * @param a the Worker to enqueue for repeating annotation annotating
+         * @param a the Annotator to enqueue for repeating annotation annotating
          */
-        public void annotateRepeated(Worker a) {
+        public void annotateRepeated(Annotator a) {
             Annotate.this.repeated(a);
         }
     }
@@ -255,12 +238,8 @@ public class Annotate {
                   : attr.attribType(a.annotationType, env));
         a.type = chk.checkType(a.annotationType.pos(), at, expected);
         if (a.type.isErroneous()) {
-            // Need to make sure nested (anno)trees does not have null as .type
-            attr.postAttr(a);
-
             if (typeAnnotation) {
-                return new Attribute.TypeCompound(a.type, List.<Pair<MethodSymbol,Attribute>>nil(),
-                        new TypeAnnotationPosition());
+                return new Attribute.TypeCompound(a.type, List.<Pair<MethodSymbol,Attribute>>nil(), null);
             } else {
                 return new Attribute.Compound(a.type, List.<Pair<MethodSymbol,Attribute>>nil());
             }
@@ -268,10 +247,6 @@ public class Annotate {
         if ((a.type.tsym.flags() & Flags.ANNOTATION) == 0) {
             log.error(a.annotationType.pos(),
                       "not.annotation.type", a.type.toString());
-
-            // Need to make sure nested (anno)trees does not have null as .type
-            attr.postAttr(a);
-
             if (typeAnnotation) {
                 return new Attribute.TypeCompound(a.type, List.<Pair<MethodSymbol,Attribute>>nil(), null);
             } else {
@@ -285,7 +260,7 @@ public class Annotate {
                 Assign(make.Ident(names.value), args.head);
         }
         ListBuffer<Pair<MethodSymbol,Attribute>> buf =
-            new ListBuffer<>();
+            new ListBuffer<Pair<MethodSymbol,Attribute>>();
         for (List<JCExpression> tl = args; tl.nonEmpty(); tl = tl.tail) {
             JCExpression t = tl.head;
             if (!t.hasTag(ASSIGN)) {
@@ -311,7 +286,8 @@ public class Annotate {
             Type result = method.type.getReturnType();
             Attribute value = enterAttributeValue(result, assign.rhs, env);
             if (!method.type.isErroneous())
-                buf.append(new Pair<>((MethodSymbol)method, value));
+                buf.append(new Pair<MethodSymbol,Attribute>
+                           ((MethodSymbol)method, value));
             t.type = result;
         }
         if (typeAnnotation) {
@@ -341,9 +317,50 @@ public class Annotate {
             expected.tsym.complete();
         } catch(CompletionFailure e) {
             log.error(tree.pos(), "cant.resolve", Kinds.kindName(e.sym), e.sym);
-            expected = syms.errType;
+            return new Attribute.Error(expected);
         }
-        if (expected.hasTag(ARRAY)) {
+        if (expected.isPrimitive() || types.isSameType(expected, syms.stringType)) {
+            Type result = attr.attribExpr(tree, env, expected);
+            if (result.isErroneous())
+                return new Attribute.Error(expected);
+            if (result.constValue() == null) {
+                log.error(tree.pos(), "attribute.value.must.be.constant");
+                return new Attribute.Error(expected);
+            }
+            result = cfolder.coerce(result, expected);
+            return new Attribute.Constant(expected, result.constValue());
+        }
+        if (expected.tsym == syms.classType.tsym) {
+            Type result = attr.attribExpr(tree, env, expected);
+            if (result.isErroneous()) {
+                // Does it look like a class literal?
+                if (TreeInfo.name(tree) == names._class) {
+                    Name n = (((JCFieldAccess) tree).selected).type.tsym.flatName();
+                    return new Attribute.UnresolvedClass(expected,
+                            types.createErrorType(n,
+                                    syms.unknownSymbol, syms.classType));
+                } else {
+                    return new Attribute.Error(expected);
+                }
+            }
+
+            // Class literals look like field accesses of a field named class
+            // at the tree level
+            if (TreeInfo.name(tree) != names._class) {
+                log.error(tree.pos(), "annotation.value.must.be.class.literal");
+                return new Attribute.Error(expected);
+            }
+            return new Attribute.Class(types,
+                                       (((JCFieldAccess) tree).selected).type);
+        }
+        if ((expected.tsym.flags() & Flags.ANNOTATION) != 0) {
+            if (!tree.hasTag(ANNOTATION)) {
+                log.error(tree.pos(), "annotation.value.must.be.annotation");
+                expected = syms.errorType;
+            }
+            return enterAnnotation((JCAnnotation)tree, expected, env);
+        }
+        if (expected.hasTag(ARRAY)) { // should really be isArray()
             if (!tree.hasTag(NEWARRAY)) {
                 tree = make.at(tree.pos).
                     NewArray(null, List.<JCExpression>nil(), List.of(tree));
@@ -351,6 +368,7 @@ public class Annotate {
             JCNewArray na = (JCNewArray)tree;
             if (na.elemtype != null) {
                 log.error(na.elemtype.pos(), "new.not.allowed.in.annotation");
+                return new Attribute.Error(expected);
             }
             ListBuffer<Attribute> buf = new ListBuffer<Attribute>();
             for (List<JCExpression> l = na.elems; l.nonEmpty(); l=l.tail) {
@@ -362,84 +380,20 @@ public class Annotate {
             return new Attribute.
                 Array(expected, buf.toArray(new Attribute[buf.length()]));
         }
-        if (tree.hasTag(NEWARRAY)) { //error recovery
-            if (!expected.isErroneous())
-                log.error(tree.pos(), "annotation.value.not.allowable.type");
-            JCNewArray na = (JCNewArray)tree;
-            if (na.elemtype != null) {
-                log.error(na.elemtype.pos(), "new.not.allowed.in.annotation");
-            }
-            for (List<JCExpression> l = na.elems; l.nonEmpty(); l=l.tail) {
-                enterAttributeValue(syms.errType,
-                                    l.head,
-                                    env);
-            }
-            return new Attribute.Error(syms.errType);
-        }
-        if ((expected.tsym.flags() & Flags.ANNOTATION) != 0) {
-            if (tree.hasTag(ANNOTATION)) {
-                return enterAnnotation((JCAnnotation)tree, expected, env);
-            } else {
-                log.error(tree.pos(), "annotation.value.must.be.annotation");
-                expected = syms.errType;
-            }
-        }
-        if (tree.hasTag(ANNOTATION)) { //error recovery
-            if (!expected.isErroneous())
-                log.error(tree.pos(), "annotation.not.valid.for.type", expected);
-            enterAnnotation((JCAnnotation)tree, syms.errType, env);
-            return new Attribute.Error(((JCAnnotation)tree).annotationType.type);
-        }
-        if (expected.isPrimitive() || types.isSameType(expected, syms.stringType)) {
-            Type result = attr.attribExpr(tree, env, expected);
-            if (result.isErroneous())
-                return new Attribute.Error(result.getOriginalType());
-            if (result.constValue() == null) {
-                log.error(tree.pos(), "attribute.value.must.be.constant");
-                return new Attribute.Error(expected);
-            }
-            result = cfolder.coerce(result, expected);
-            return new Attribute.Constant(expected, result.constValue());
-        }
-        if (expected.tsym == syms.classType.tsym) {
-            Type result = attr.attribExpr(tree, env, expected);
-            if (result.isErroneous()) {
-                // Does it look like an unresolved class literal?
-                if (TreeInfo.name(tree) == names._class &&
-                    ((JCFieldAccess) tree).selected.type.isErroneous()) {
-                    Name n = (((JCFieldAccess) tree).selected).type.tsym.flatName();
-                    return new Attribute.UnresolvedClass(expected,
-                            types.createErrorType(n,
-                                    syms.unknownSymbol, syms.classType));
-                } else {
-                    return new Attribute.Error(result.getOriginalType());
-                }
-            }
-
-            // Class literals look like field accesses of a field named class
-            // at the tree level
-            if (TreeInfo.name(tree) != names._class) {
-                log.error(tree.pos(), "annotation.value.must.be.class.literal");
-                return new Attribute.Error(syms.errType);
-            }
-            return new Attribute.Class(types,
-                                       (((JCFieldAccess) tree).selected).type);
-        }
         if (expected.hasTag(CLASS) &&
             (expected.tsym.flags() & Flags.ENUM) != 0) {
-            Type result = attr.attribExpr(tree, env, expected);
+            attr.attribExpr(tree, env, expected);
             Symbol sym = TreeInfo.symbol(tree);
             if (sym == null ||
                 TreeInfo.nonstaticSelect(tree) ||
                 sym.kind != Kinds.VAR ||
                 (sym.flags() & Flags.ENUM) == 0) {
                 log.error(tree.pos(), "enum.annotation.must.be.enum.constant");
-                return new Attribute.Error(result.getOriginalType());
+                return new Attribute.Error(expected);
             }
             VarSymbol enumerator = (VarSymbol) sym;
             return new Attribute.Enum(expected, enumerator);
         }
-        //error recovery:
         if (!expected.isErroneous())
             log.error(tree.pos(), "annotation.value.not.allowable.type");
         return new Attribute.Error(attr.attribExpr(tree, env, expected));

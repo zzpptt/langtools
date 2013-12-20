@@ -25,8 +25,6 @@
 
 package com.sun.tools.javac.code;
 
-import java.lang.annotation.Annotation;
-import java.lang.annotation.Inherited;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -39,6 +37,8 @@ import com.sun.tools.javac.comp.Attr;
 import com.sun.tools.javac.comp.AttrContext;
 import com.sun.tools.javac.comp.Env;
 import com.sun.tools.javac.jvm.*;
+import com.sun.tools.javac.model.*;
+import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.Name;
 import static com.sun.tools.javac.code.Flags.*;
@@ -58,7 +58,8 @@ import com.sun.tools.javac.tree.JCTree.JCVariableDecl;
  *  This code and its internal interfaces are subject to change or
  *  deletion without notice.</b>
  */
-public abstract class Symbol extends AnnoConstruct implements Element {
+public abstract class Symbol implements Element {
+    // public Throwable debug = new Throwable();
 
     /** The kind of this symbol.
      *  @see Kinds
@@ -100,17 +101,16 @@ public abstract class Symbol extends AnnoConstruct implements Element {
     /** The attributes of this symbol are contained in this
      * SymbolMetadata. The SymbolMetadata instance is NOT immutable.
      */
-    protected SymbolMetadata metadata;
-
+    protected SymbolMetadata annotations;
 
     /** An accessor method for the attributes of this symbol.
      *  Attributes of class symbols should be accessed through the accessor
      *  method to make sure that the class symbol is loaded.
      */
     public List<Attribute.Compound> getRawAttributes() {
-        return (metadata == null)
+        return (annotations == null)
                 ? List.<Attribute.Compound>nil()
-                : metadata.getDeclarationAttributes();
+                : annotations.getDeclarationAttributes();
     }
 
     /** An accessor method for the type attributes of this symbol.
@@ -118,9 +118,9 @@ public abstract class Symbol extends AnnoConstruct implements Element {
      *  method to make sure that the class symbol is loaded.
      */
     public List<Attribute.TypeCompound> getRawTypeAttributes() {
-        return (metadata == null)
+        return (annotations == null)
                 ? List.<Attribute.TypeCompound>nil()
-                : metadata.getTypeAttributes();
+                : annotations.getTypeAttributes();
     }
 
     /** Fetch a particular annotation from a symbol. */
@@ -132,106 +132,106 @@ public abstract class Symbol extends AnnoConstruct implements Element {
     }
 
     public boolean annotationsPendingCompletion() {
-        return metadata == null ? false : metadata.pendingCompletion();
+        return annotations == null ? false : annotations.pendingCompletion();
     }
 
     public void appendAttributes(List<Attribute.Compound> l) {
         if (l.nonEmpty()) {
-            initedMetadata().append(l);
+            initedAnnos().append(l);
         }
     }
 
     public void appendClassInitTypeAttributes(List<Attribute.TypeCompound> l) {
         if (l.nonEmpty()) {
-            initedMetadata().appendClassInitTypeAttributes(l);
+            initedAnnos().appendClassInitTypeAttributes(l);
         }
     }
 
     public void appendInitTypeAttributes(List<Attribute.TypeCompound> l) {
         if (l.nonEmpty()) {
-            initedMetadata().appendInitTypeAttributes(l);
+            initedAnnos().appendInitTypeAttributes(l);
         }
     }
 
     public void appendTypeAttributesWithCompletion(final Annotate.AnnotateRepeatedContext<Attribute.TypeCompound> ctx) {
-        initedMetadata().appendTypeAttributesWithCompletion(ctx);
+        initedAnnos().appendTypeAttributesWithCompletion(ctx);
     }
 
     public void appendUniqueTypeAttributes(List<Attribute.TypeCompound> l) {
         if (l.nonEmpty()) {
-            initedMetadata().appendUniqueTypes(l);
+            initedAnnos().appendUniqueTypes(l);
         }
     }
 
     public List<Attribute.TypeCompound> getClassInitTypeAttributes() {
-        return (metadata == null)
+        return (annotations == null)
                 ? List.<Attribute.TypeCompound>nil()
-                : metadata.getClassInitTypeAttributes();
+                : annotations.getClassInitTypeAttributes();
     }
 
     public List<Attribute.TypeCompound> getInitTypeAttributes() {
-        return (metadata == null)
+        return (annotations == null)
                 ? List.<Attribute.TypeCompound>nil()
-                : metadata.getInitTypeAttributes();
+                : annotations.getInitTypeAttributes();
     }
 
     public List<Attribute.Compound> getDeclarationAttributes() {
-        return (metadata == null)
+        return (annotations == null)
                 ? List.<Attribute.Compound>nil()
-                : metadata.getDeclarationAttributes();
+                : annotations.getDeclarationAttributes();
     }
 
     public boolean hasAnnotations() {
-        return (metadata != null && !metadata.isEmpty());
+        return (annotations != null && !annotations.isEmpty());
     }
 
     public boolean hasTypeAnnotations() {
-        return (metadata != null && !metadata.isTypesEmpty());
+        return (annotations != null && !annotations.isTypesEmpty());
     }
 
     public void prependAttributes(List<Attribute.Compound> l) {
         if (l.nonEmpty()) {
-            initedMetadata().prepend(l);
+            initedAnnos().prepend(l);
         }
     }
 
     public void resetAnnotations() {
-        initedMetadata().reset();
+        initedAnnos().reset();
     }
 
     public void setAttributes(Symbol other) {
-        if (metadata != null || other.metadata != null) {
-            initedMetadata().setAttributes(other.metadata);
+        if (annotations != null || other.annotations != null) {
+            initedAnnos().setAttributes(other.annotations);
         }
     }
 
     public void setDeclarationAttributes(List<Attribute.Compound> a) {
-        if (metadata != null || a.nonEmpty()) {
-            initedMetadata().setDeclarationAttributes(a);
+        if (annotations != null || a.nonEmpty()) {
+            initedAnnos().setDeclarationAttributes(a);
         }
     }
 
     public void setDeclarationAttributesWithCompletion(final Annotate.AnnotateRepeatedContext<Attribute.Compound> ctx) {
-        initedMetadata().setDeclarationAttributesWithCompletion(ctx);
+        initedAnnos().setDeclarationAttributesWithCompletion(ctx);
     }
 
     public void setTypeAttributes(List<Attribute.TypeCompound> a) {
-        if (metadata != null || a.nonEmpty()) {
-            if (metadata == null)
-                metadata = new SymbolMetadata(this);
-            metadata.setTypeAttributes(a);
+        if (annotations != null || a.nonEmpty()) {
+            if (annotations == null)
+                annotations = new SymbolMetadata(this);
+            annotations.setTypeAttributes(a);
         }
     }
 
-    private SymbolMetadata initedMetadata() {
-        if (metadata == null)
-            metadata = new SymbolMetadata(this);
-        return metadata;
+    private SymbolMetadata initedAnnos() {
+        if (annotations == null)
+            annotations = new SymbolMetadata(this);
+        return annotations;
     }
 
     /** This method is intended for debugging only. */
-    public SymbolMetadata getMetadata() {
-        return metadata;
+    public SymbolMetadata getAnnotations() {
+        return annotations;
     }
 
     // </editor-fold>
@@ -327,8 +327,7 @@ public abstract class Symbol extends AnnoConstruct implements Element {
     public boolean isStatic() {
         return
             (flags() & STATIC) != 0 ||
-            (owner.flags() & INTERFACE) != 0 && kind != MTH &&
-             name != name.table.names._this;
+            (owner.flags() & INTERFACE) != 0 && kind != MTH;
     }
 
     public boolean isInterface() {
@@ -596,6 +595,18 @@ public abstract class Symbol extends AnnoConstruct implements Element {
         return getRawAttributes();
     }
 
+    /**
+     * @deprecated this method should never be used by javac internally.
+     */
+    @Deprecated
+    public <A extends java.lang.annotation.Annotation> A getAnnotation(Class<A> annoType) {
+        return JavacAnnoConstructs.getAnnotation(this, annoType);
+    }
+
+    // This method is part of the javax.lang.model API, do not use this in javac code.
+    public <A extends java.lang.annotation.Annotation> A[] getAnnotationsByType(Class<A> annoType) {
+        return JavacAnnoConstructs.getAnnotationsByType(this, annoType);
+    }
 
     // TODO: getEnclosedElements should return a javac List, fix in FilteredMemberList
     public java.util.List<Symbol> getEnclosedElements() {
@@ -781,28 +792,6 @@ public abstract class Symbol extends AnnoConstruct implements Element {
             return res = res.reverse();
         }
 
-
-
-        // Helper to getAnnotation[s]
-        @Override
-        public <A extends Annotation> Attribute.Compound getAttribute(Class<A> annoType) {
-
-            String name = annoType.getName();
-
-            // Declaration annotations on type variables are stored in type attributes
-            // on the owner of the TypeVariableSymbol
-            List<Attribute.TypeCompound> candidates = owner.getRawTypeAttributes();
-            for (Attribute.TypeCompound anno : candidates)
-                if (anno.position.type == TargetType.CLASS_TYPE_PARAMETER ||
-                        anno.position.type == TargetType.METHOD_TYPE_PARAMETER)
-                    if (name.contentEquals(anno.type.tsym.flatName()))
-                        return anno;
-
-            return null;
-        }
-
-
-
         @Override
         public <R, P> R accept(ElementVisitor<R, P> v, P p) {
             return v.visitTypeParameter(this, p);
@@ -862,10 +851,10 @@ public abstract class Symbol extends AnnoConstruct implements Element {
         }
 
         private void mergeAttributes() {
-            if (metadata == null &&
-                package_info.metadata != null) {
-                metadata = new SymbolMetadata(this);
-                metadata.setAttributes(package_info.metadata);
+            if (annotations == null &&
+                package_info.annotations != null) {
+                annotations = new SymbolMetadata(this);
+                annotations.setAttributes(package_info.annotations);
             }
         }
 
@@ -1059,31 +1048,6 @@ public abstract class Symbol extends AnnoConstruct implements Element {
             }
         }
 
-        /**
-         * Returns the next class to search for inherited annotations or {@code null}
-         * if the next class can't be found.
-         */
-        private ClassSymbol getSuperClassToSearchForAnnotations() {
-
-            Type sup = getSuperclass();
-
-            if (!sup.hasTag(CLASS) || sup.isErroneous())
-                return null;
-
-            return (ClassSymbol) sup.tsym;
-        }
-
-
-        @Override
-        protected <A extends Annotation> A[] getInheritedAnnotations(Class<A> annoType) {
-
-            ClassSymbol sup = getSuperClassToSearchForAnnotations();
-
-            return sup == null ? super.getInheritedAnnotations(annoType)
-                               : sup.getAnnotationsByType(annoType);
-        }
-
-
         public ElementKind getKind() {
             long flags = flags();
             if ((flags & ANNOTATION) != 0)
@@ -1094,12 +1058,6 @@ public abstract class Symbol extends AnnoConstruct implements Element {
                 return ElementKind.ENUM;
             else
                 return ElementKind.CLASS;
-        }
-
-        @Override
-        public Set<Modifier> getModifiers() {
-            long flags = flags();
-            return Flags.asModifierSet(flags & ~DEFAULT);
         }
 
         public NestingKind getNestingKind() {
@@ -1114,24 +1072,14 @@ public abstract class Symbol extends AnnoConstruct implements Element {
                 return NestingKind.MEMBER;
         }
 
-
+        /**
+         * Since this method works in terms of the runtime representation
+         * of annotations, it should never be used by javac internally.
+         */
         @Override
-        protected <A extends Annotation> Attribute.Compound getAttribute(final Class<A> annoType) {
-
-            Attribute.Compound attrib = super.getAttribute(annoType);
-
-            boolean inherited = annoType.isAnnotationPresent(Inherited.class);
-            if (attrib != null || !inherited)
-                return attrib;
-
-            // Search supertypes
-            ClassSymbol superType = getSuperClassToSearchForAnnotations();
-            return superType == null ? null
-                                     : superType.getAttribute(annoType);
+        public <A extends java.lang.annotation.Annotation> A getAnnotation(Class<A> annoType) {
+            return JavacAnnoConstructs.getAnnotation(this, annoType);
         }
-
-
-
 
         public <R, P> R accept(ElementVisitor<R, P> v, P p) {
             return v.visitType(this, p);

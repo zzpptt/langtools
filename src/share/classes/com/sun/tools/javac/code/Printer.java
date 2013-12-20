@@ -260,23 +260,24 @@ public abstract class Printer implements Type.Visitor<String, Locale>, Symbol.Vi
 
     @Override
     public String visitAnnotatedType(AnnotatedType t, Locale locale) {
-        if (t.getAnnotationMirrors().nonEmpty()) {
-            if (t.unannotatedType().hasTag(TypeTag.ARRAY)) {
+        if (t.typeAnnotations != null &&
+                t.typeAnnotations.nonEmpty()) {
+            if (t.underlyingType.hasTag(TypeTag.ARRAY)) {
                 StringBuilder res = new StringBuilder();
                 printBaseElementType(t, res, locale);
                 printBrackets(t, res, locale);
                 return res.toString();
-            } else if (t.unannotatedType().hasTag(TypeTag.CLASS) &&
-                    t.unannotatedType().getEnclosingType() != Type.noType) {
-                return visit(t.unannotatedType().getEnclosingType(), locale) +
+            } else if (t.underlyingType.hasTag(TypeTag.CLASS) &&
+                    t.underlyingType.getEnclosingType() != Type.noType) {
+                return visit(t.underlyingType.getEnclosingType(), locale) +
                         ". " +
-                        t.getAnnotationMirrors() +
-                        " " + className((ClassType)t.unannotatedType(), false, locale);
+                        t.typeAnnotations +
+                        " " + className((ClassType)t.underlyingType, false, locale);
             } else {
-                return t.getAnnotationMirrors() + " " + visit(t.unannotatedType(), locale);
+                return t.typeAnnotations + " " + visit(t.underlyingType, locale);
             }
         } else {
-            return visit(t.unannotatedType(), locale);
+            return visit(t.underlyingType, locale);
         }
     }
 

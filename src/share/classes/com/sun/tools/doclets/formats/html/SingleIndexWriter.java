@@ -115,8 +115,7 @@ public class SingleIndexWriter extends AbstractIndexWriter {
         for (int i = 0; i < indexbuilder.elements().length; i++) {
             String unicode = (indexbuilder.elements())[i].toString();
             contentTree.addContent(
-                    getHyperLink(getNameForIndex(unicode),
-                    new StringContent(unicode)));
+                    getHyperLink("_" + unicode + "_", new StringContent(unicode)));
             contentTree.addContent(getSpace());
         }
     }

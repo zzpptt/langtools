@@ -37,14 +37,14 @@ import java.util.List;
  *   (x,y)-> { return x + y; }
  * }</pre>
  */
-@jdk.Exported
+@jdk.Supported
 public interface LambdaExpressionTree extends ExpressionTree {
 
     /**
      * Lambda expressions come in two forms: (i) expression lambdas, whose body
      * is an expression, and (ii) statement lambdas, whose body is a block
      */
-    @jdk.Exported
+    @jdk.Supported
     public enum BodyKind {
         /** enum constant for expression lambdas */
         EXPRESSION,

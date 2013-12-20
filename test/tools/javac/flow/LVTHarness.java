@@ -23,10 +23,8 @@
 
 /*
  * @test
- * @bug 7047734 8027660
- * @summary The LVT is not generated correctly during some try/catch scenarios;
- *          javac crash while creating LVT entry for a local variable defined in
- *          an inner block
+ * @bug 7047734
+ * @summary The LVT is not generated correctly during some try/catch scenarios
  * @library /tools/javac/lib
  * @build JavacTestingAbstractProcessor LVTHarness
  * @run main LVTHarness

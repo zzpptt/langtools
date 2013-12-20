@@ -42,7 +42,7 @@ import java.util.List;
  * @author Jonathan Gibbons
  * @since 1.6
  */
-@jdk.Exported
+@jdk.Supported
 public interface ForLoopTree extends StatementTree {
     List<? extends StatementTree> getInitializer();
     ExpressionTree getCondition();

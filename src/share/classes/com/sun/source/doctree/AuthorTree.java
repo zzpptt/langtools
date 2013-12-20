@@ -35,7 +35,7 @@ import java.util.List;
  *
  * @since 1.8
  */
-@jdk.Exported
+@jdk.Supported
 public interface AuthorTree extends BlockTagTree {
     List<? extends DocTree> getName();
 }

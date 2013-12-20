@@ -58,4 +58,9 @@ public class DocletConstants {
      * The default package file name.
      */
     public static final String DEFAULT_PACKAGE_FILE_NAME = "default";
+
+    /**
+     * The anchor for the default package.
+     */
+    public static final String UNNAMED_PACKAGE_ANCHOR = "unnamed_package";
 }

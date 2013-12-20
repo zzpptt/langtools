@@ -45,7 +45,7 @@ import java.util.List;
  * @author Jonathan Gibbons
  * @since 1.6
  */
-@jdk.Exported
+@jdk.Supported
 public interface BlockTree extends StatementTree {
     boolean isStatic();
     List<? extends StatementTree> getStatements();

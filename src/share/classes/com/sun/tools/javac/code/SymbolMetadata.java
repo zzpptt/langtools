@@ -205,14 +205,14 @@ public class SymbolMetadata {
 
             // Queue a pass that will replace Attribute.Placeholders
             // with Attribute.Compound (made from synthesized containers).
-            ctx.annotateRepeated(new Annotate.Worker() {
+            ctx.annotateRepeated(new Annotate.Annotator() {
                 @Override
                 public String toString() {
                     return "repeated annotation pass of: " + sym + " in: " + sym.owner;
                 }
 
                 @Override
-                public void run() {
+                public void enterAnnotation() {
                     complete(ctx);
                 }
             });
@@ -429,7 +429,7 @@ public class SymbolMetadata {
             super(on.type, List.<Pair<Symbol.MethodSymbol, Attribute>>nil(),
                     ctx.isTypeCompound ?
                             ((Attribute.TypeCompound)placeholderFor.head).position :
-                                new TypeAnnotationPosition());
+                                null);
             this.ctx = ctx;
             this.placeholderFor = placeholderFor;
             this.on = on;

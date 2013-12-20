@@ -34,7 +34,7 @@ package com.sun.source.doctree;
  *
  * @since 1.8
  */
-@jdk.Exported
+@jdk.Supported
 public interface LiteralTree extends InlineTagTree {
     TextTree getBody();
 }

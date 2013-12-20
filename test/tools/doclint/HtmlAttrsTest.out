@@ -1,5 +1,5 @@
 HtmlAttrsTest.java:13: error: unknown attribute: xyz
-     * <p xyz> text </p>
+     * <p xyz>
           ^
 HtmlAttrsTest.java:18: warning: attribute obsolete: name
      * <img name="x" alt="alt">

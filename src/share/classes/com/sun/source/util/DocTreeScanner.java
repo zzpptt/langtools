@@ -67,7 +67,7 @@ import com.sun.source.doctree.*;
  *
  * @since 1.8
  */
-@jdk.Exported
+@jdk.Supported
 public class DocTreeScanner<R,P> implements DocTreeVisitor<R,P> {
 
     /**

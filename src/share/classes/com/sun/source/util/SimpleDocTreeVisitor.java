@@ -32,7 +32,7 @@ import com.sun.source.doctree.*;
  *
  * @since 1.8
  */
-@jdk.Exported
+@jdk.Supported
 public class SimpleDocTreeVisitor<R,P> implements DocTreeVisitor<R, P> {
     protected final R DEFAULT_VALUE;
 

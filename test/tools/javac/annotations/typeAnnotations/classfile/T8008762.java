@@ -24,6 +24,7 @@
 /*
  * @test
  * @bug 8008762
+ * @ignore 8013409: test failures for type annotations
  * @summary Type annotation on inner class in anonymous class
  *          shows up as regular annotation
  */

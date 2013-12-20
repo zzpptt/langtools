@@ -88,7 +88,7 @@ public class AnnotationTypeFieldWriterImpl extends AbstractMemberWriter
             Content memberDetailsTree) {
         if (!writer.printedAnnotationFieldHeading) {
             memberDetailsTree.addContent(writer.getMarkerAnchor(
-                    SectionName.ANNOTATION_TYPE_FIELD_DETAIL));
+                    "annotation_type_field_detail"));
             Content heading = HtmlTree.HEADING(HtmlConstants.DETAILS_HEADING,
                     writer.fieldDetailsLabel);
             memberDetailsTree.addContent(heading);
@@ -217,7 +217,7 @@ public class AnnotationTypeFieldWriterImpl extends AbstractMemberWriter
      */
     public void addSummaryAnchor(ClassDoc cd, Content memberTree) {
         memberTree.addContent(writer.getMarkerAnchor(
-                SectionName.ANNOTATION_TYPE_FIELD_SUMMARY));
+                "annotation_type_field_summary"));
     }
 
     /**
@@ -237,9 +237,9 @@ public class AnnotationTypeFieldWriterImpl extends AbstractMemberWriter
      */
     protected void addSummaryLink(LinkInfoImpl.Kind context, ClassDoc cd, ProgramElementDoc member,
             Content tdSummary) {
-        Content memberLink = HtmlTree.SPAN(HtmlStyle.memberNameLink,
+        Content strong = HtmlTree.SPAN(HtmlStyle.strong,
                 writer.getDocLink(context, (MemberDoc) member, member.name(), false));
-        Content code = HtmlTree.CODE(memberLink);
+        Content code = HtmlTree.CODE(strong);
         tdSummary.addContent(code);
     }
 
@@ -272,8 +272,7 @@ public class AnnotationTypeFieldWriterImpl extends AbstractMemberWriter
      */
     protected Content getNavSummaryLink(ClassDoc cd, boolean link) {
         if (link) {
-            return writer.getHyperLink(
-                    SectionName.ANNOTATION_TYPE_FIELD_SUMMARY,
+            return writer.getHyperLink("annotation_type_field_summary",
                     writer.getResource("doclet.navField"));
         } else {
             return writer.getResource("doclet.navField");
@@ -285,8 +284,7 @@ public class AnnotationTypeFieldWriterImpl extends AbstractMemberWriter
      */
     protected void addNavDetailLink(boolean link, Content liNav) {
         if (link) {
-            liNav.addContent(writer.getHyperLink(
-                    SectionName.ANNOTATION_TYPE_FIELD_DETAIL,
+            liNav.addContent(writer.getHyperLink("annotation_type_field_detail",
                     writer.getResource("doclet.navField")));
         } else {
             liNav.addContent(writer.getResource("doclet.navField"));

@@ -10,7 +10,7 @@
 /** */
 public class HtmlAttrsTest {
     /**
-     * <p xyz> text </p>
+     * <p xyz>
      */
     public void unknown() { }
 

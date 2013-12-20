@@ -203,9 +203,8 @@ public class PackageIndexWriter extends AbstractPackageIndexWriter {
             Content see = seeLabel;
             see.addContent(" ");
             Content descPara = HtmlTree.P(see);
-            Content descLink = getHyperLink(getDocLink(
-                    SectionName.OVERVIEW_DESCRIPTION),
-                    descriptionLabel, "", "");
+            Content descLink = getHyperLink(DocLink.fragment("overview_description"),
+                descriptionLabel, "", "");
             descPara.addContent(descLink);
             div.addContent(descPara);
             body.addContent(div);
@@ -221,8 +220,7 @@ public class PackageIndexWriter extends AbstractPackageIndexWriter {
      */
     protected void addOverviewComment(Content htmltree) {
         if (root.inlineTags().length > 0) {
-            htmltree.addContent(
-                    getMarkerAnchor(SectionName.OVERVIEW_DESCRIPTION));
+            htmltree.addContent(getMarkerAnchor("overview_description"));
             addInlineComment(root, htmltree);
         }
     }

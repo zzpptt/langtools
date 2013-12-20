@@ -107,21 +107,15 @@ public class CreateSymbols extends AbstractProcessor {
             if (renv.processingOver())
                 createSymbols();
         } catch (IOException e) {
-            CharSequence msg = e.getLocalizedMessage();
-            if (msg == null)
-                msg = e.toString();
             processingEnv.getMessager()
-                .printMessage(Diagnostic.Kind.ERROR, msg);
+                .printMessage(Diagnostic.Kind.ERROR, e.getLocalizedMessage());
         } catch (Throwable t) {
             t.printStackTrace();
             Throwable cause = t.getCause();
             if (cause == null)
                 cause = t;
-            CharSequence msg = cause.getLocalizedMessage();
-            if (msg == null)
-                msg = cause.toString();
             processingEnv.getMessager()
-                .printMessage(Diagnostic.Kind.ERROR, msg);
+                .printMessage(Diagnostic.Kind.ERROR, cause.getLocalizedMessage());
         }
         return true;
     }

@@ -27,7 +27,7 @@
  * @summary javac should generate method parameters correctly.
  * @build Tester
  * @compile -parameters StaticMethods.java
- * @run main Tester StaticMethods StaticMethods.out
+ * @run main Tester StaticMethods
  */
 
 public class StaticMethods {

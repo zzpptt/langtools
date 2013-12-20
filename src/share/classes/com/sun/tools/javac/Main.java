@@ -31,7 +31,7 @@ import java.io.PrintWriter;
  * The programmatic interface for the Java Programming Language
  * compiler, javac.
  */
-@jdk.Exported
+@jdk.Supported
 public class Main {
 
     /** Main entry point for the launcher.

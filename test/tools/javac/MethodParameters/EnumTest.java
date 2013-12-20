@@ -27,7 +27,7 @@
  * @summary javac should generate method parameters correctly.
  * @build Tester
  * @compile -parameters EnumTest.java
- * @run main Tester EnumTest EnumTest.out
+ * @run main Tester EnumTest
  */
 
 /** Test that parameter names are recorded for enum methods */

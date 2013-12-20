@@ -85,10 +85,12 @@ public class HtmlSerialMethodWriter extends MethodWriterImpl implements
      * @return a content tree for the serializable methods content
      */
     public Content getSerializableMethods(String heading, Content serializableMethodContent) {
+        Content li = HtmlTree.LI(HtmlStyle.blockList, writer.getMarkerAnchor(
+                "serialized_methods"));
         Content headingContent = new StringContent(heading);
         Content serialHeading = HtmlTree.HEADING(HtmlConstants.SERIALIZED_MEMBER_HEADING,
                 headingContent);
-        Content li = HtmlTree.LI(HtmlStyle.blockList, serialHeading);
+        li.addContent(serialHeading);
         li.addContent(serializableMethodContent);
         return li;
     }
@@ -111,6 +113,8 @@ public class HtmlSerialMethodWriter extends MethodWriterImpl implements
      * @param methodsContentTree the content tree to which the member header will be added
      */
     public void addMemberHeader(MethodDoc member, Content methodsContentTree) {
+        methodsContentTree.addContent(writer.getMarkerAnchor(
+                writer.getAnchor(member)));
         methodsContentTree.addContent(getHead(member));
         methodsContentTree.addContent(getSignature(member));
     }

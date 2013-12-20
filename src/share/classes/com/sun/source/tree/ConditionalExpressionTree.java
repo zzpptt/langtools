@@ -39,7 +39,7 @@ package com.sun.source.tree;
  * @author Jonathan Gibbons
  * @since 1.6
  */
-@jdk.Exported
+@jdk.Supported
 public interface ConditionalExpressionTree extends ExpressionTree {
     ExpressionTree getCondition();
     ExpressionTree getTrueExpression();
