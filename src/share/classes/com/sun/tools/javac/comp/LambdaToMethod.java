@@ -357,9 +357,11 @@ public class LambdaToMethod extends TreeTranslator {
 
         //first determine the method symbol to be used to generate the sam instance
         //this is either the method reference symbol, or the bridged reference symbol
-        Symbol refSym = localContext.needsBridge() ?
-            localContext.bridgeSym :
-            tree.sym;
+        Symbol refSym = localContext.needsBridge()
+                ? localContext.bridgeSym
+                : localContext.isSignaturePolymorphic()
+                ? localContext.sigPolySym
+                : tree.sym;
 
         //build the bridge method, if needed
         if (localContext.needsBridge()) {
@@ -1472,12 +1474,27 @@ public class LambdaToMethod extends TreeTranslator {
         private Symbol initSym(ClassSymbol csym, long flags) {
             boolean isStatic = (flags & STATIC) != 0;
             if (isStatic) {
-                //static clinits are generated in Gen - so we need to fake them
-                Symbol clinit = clinits.get(csym);
+                /* static clinits are generated in Gen, so we need to use a fake
+                 * one. Attr creates a fake clinit method while attributing
+                 * lambda expressions used as initializers of static fields, so
+                 * let's use that one.
+                 */
+                MethodSymbol clinit = attr.removeClinit(csym);
+                if (clinit != null) {
+                    clinits.put(csym, clinit);
+                    return clinit;
+                }
+
+                /* if no clinit is found at Attr, then let's try at clinits.
+                 */
+                clinit = (MethodSymbol)clinits.get(csym);
                 if (clinit == null) {
+                    /* no luck, let's create a new one
+                     */
                     clinit = makePrivateSyntheticMethod(STATIC,
                             names.clinit,
-                            new MethodType(List.<Type>nil(), syms.voidType, List.<Type>nil(), syms.methodClass),
+                            new MethodType(List.<Type>nil(), syms.voidType,
+                                List.<Type>nil(), syms.methodClass),
                             csym);
                     clinits.put(csym, clinit);
                 }
@@ -1995,6 +2012,7 @@ public class LambdaToMethod extends TreeTranslator {
 
             final boolean isSuper;
             final Symbol bridgeSym;
+            final Symbol sigPolySym;
 
             ReferenceTranslationContext(JCMemberReference tree) {
                 super(tree);
@@ -2003,6 +2021,12 @@ public class LambdaToMethod extends TreeTranslator {
                         ? makePrivateSyntheticMethod(isSuper ? 0 : STATIC,
                                               referenceBridgeName(), null,
                                               owner.enclClass())
+                        : null;
+                this.sigPolySym = isSignaturePolymorphic()
+                        ? makePrivateSyntheticMethod(tree.sym.flags(),
+                                              tree.sym.name,
+                                              bridgedRefSig(),
+                                              tree.sym.enclClass())
                         : null;
                 if (dumpLambdaToMethodStats) {
                     String key = bridgeSym == null ?
@@ -2103,6 +2127,15 @@ public class LambdaToMethod extends TreeTranslator {
                         !types.isSameType(
                               types.erasure(tree.sym.enclClass().asType()),
                               types.erasure(owner.enclClass().asType()));
+            }
+
+            /**
+             * Signature polymorphic methods need special handling.
+             * e.g. MethodHandle.invoke() MethodHandle.invokeExact()
+             */
+            final boolean isSignaturePolymorphic() {
+                return  tree.sym.kind == MTH &&
+                        types.isSignaturePolymorphic((MethodSymbol)tree.sym);
             }
 
             /**
